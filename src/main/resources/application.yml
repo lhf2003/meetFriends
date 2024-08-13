@@ -1,0 +1,41 @@
+spring:
+  application:
+    name: user-center
+  # 数据库连接配置
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://127.0.0.1:3306/meet_friends?useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&serverTimezone=Asia/Shanghai
+    username: root
+    password: 123456
+  session:
+    timeout: 86400
+    store-type: redis
+  # redis配置
+  redis:
+    host: 127.0.0.1
+    port: 6379
+    database: 1
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
+# 配置日志
+mybatis-plus:
+  configuration:
+#    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    # 关闭驼峰转换
+    map-underscore-to-camel-case: false
+    # 逻辑删除
+  global-config:
+    db-config:
+      logic-delete-field: isDelete # 全局逻辑删除的实体字段名
+      logic-delete-value: 1 # 逻辑已删除值(默认为 1)
+      logic-not-delete-value: 0 # 逻辑未删除值(默认为 0)
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+  session:
+    cookie:
+      domain: localhost
+knife4j:
+  enable: true
