@@ -116,7 +116,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         user = userMapper.selectOne(queryWrapper);
         if (user == null) {
             log.info("userAccount or userPassword is wrong");
-            throw new BusinessException(ErrorCode.USER_NOT_FOUND);
+            throw new BusinessException(ErrorCode.USER_NOT_FOUND,"账号或密码错误");
         }
         //脱敏用户信息
         User safelyUser = getSafetyUser(user);

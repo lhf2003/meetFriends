@@ -3,6 +3,7 @@ package com.lhf.usercenter.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.lhf.usercenter.common.ErrorCode;
 import com.lhf.usercenter.contant.UserContant;
@@ -336,6 +337,13 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
         // expireTime is null or expireTime > now()
         queryWrapper.and(qw -> qw.gt("expireTime", new Date()).or().isNull("expireTime"));
 
+        // TODO 缓存分页优化？
+        // 是否需要分页
+        int pageNum = teamQuery.getPageNum();
+        int pageSize = teamQuery.getPageSize();
+        if (pageNum != 0 && pageSize != 0) {
+            queryWrapper.last("limit " + (pageNum - 1) * pageSize + ", " + pageSize);
+        }
         List<Team> teamList = this.list(queryWrapper);
         if (teamList == null) {
             return new ArrayList<>();
@@ -379,6 +387,7 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
         List<Long> teamIdList = teamUserVOList.stream().map(TeamUserVO::getId).collect(Collectors.toList());
         QueryWrapper<UserTeam> userTeamJoinQueryWrapper = new QueryWrapper<>();
         userTeamJoinQueryWrapper.in("teamId", teamIdList);
+
         List<UserTeam> userTeamList = userTeamService.list(userTeamJoinQueryWrapper);
         // 队伍 id => 加入这个队伍的用户列表
         Map<Long, List<UserTeam>> teamIdUserTeamList = userTeamList.stream().collect(Collectors.groupingBy(UserTeam::getTeamId));
@@ -470,6 +479,29 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
         QueryWrapper<Team> teamQueryWrapper = new QueryWrapper<>();
         teamQueryWrapper.eq("userId", loginUser.getId());
         return teamMapper.selectList(teamQueryWrapper);
+    }
+
+    @Override
+    public Page<Team> getTeamListByPage(TeamQuery teamQuery) {
+        Team team = new Team();
+        BeanUtil.copyProperties(teamQuery, team);
+        QueryWrapper<Team> queryWrapper = new QueryWrapper<>(team);
+        // 不展示已过期的队伍
+        queryWrapper.and(qw -> qw.gt("expireTime", new Date()).or().isNull("expireTime"));
+        // 根据队伍状态来查询
+        Integer status = teamQuery.getStatus();
+        TeamStatusEnum statusEnum = TeamStatusEnum.getEnumByValue(status);
+        if (statusEnum == null) {
+            statusEnum = TeamStatusEnum.PUBLIC;
+        }
+        // 根据关键词查询（队伍名称和描述）
+        String searchText = teamQuery.getSearchText();
+        if (StringUtils.isNotBlank(searchText)) {
+            queryWrapper.and(qw -> qw.like("name", searchText).or().like("description", searchText));
+        }
+        queryWrapper.eq("status", statusEnum.getValue());
+        Page<Team> teamPage = teamMapper.selectPage(new Page<>(teamQuery.getPageNum(), teamQuery.getPageSize()), queryWrapper);
+        return teamPage;
     }
 
     // 获取队伍当前的人数

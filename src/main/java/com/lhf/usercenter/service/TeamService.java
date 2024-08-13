@@ -1,5 +1,6 @@
 package com.lhf.usercenter.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.lhf.usercenter.model.TeamQuery;
 import com.lhf.usercenter.model.domain.Team;
 import com.baomidou.mybatisplus.extension.service.IService;
@@ -93,4 +94,11 @@ public interface TeamService extends IService<Team> {
      * @return 创建队伍数量
      */
     List<Team> getCreateTeamList(HttpServletRequest request);
+
+    /**
+     * 分页查询队伍
+     * @param teamQuery
+     * @return
+     */
+    Page<Team> getTeamListByPage(TeamQuery teamQuery);
 }

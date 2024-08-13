@@ -93,11 +93,9 @@ public class TeamController {
         if (teamQuery == null) {
             throw new BusinessException(ErrorCode.PARAM_ERROR);
         }
-        Team team = new Team();
-        BeanUtil.copyProperties(teamQuery, team);
-        QueryWrapper<Team> queryWrapper = new QueryWrapper<>(team);
-        Page<Team> page = teamService.page(new Page<Team>(teamQuery.getPageNum(), teamQuery.getPageSize()), queryWrapper);
-        return ResultUtil.success(page);
+        Page<Team> teamPage = teamService.getTeamListByPage(teamQuery);
+
+        return ResultUtil.success(teamPage);
     }
 
     @GetMapping("/get")
