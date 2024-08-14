@@ -37,7 +37,7 @@ class ImportDataTest {
                 user.setUserPassword("12345678");
                 user.setAge(10);
                 user.setSex(1);
-                user.setPhone("14141343254");
+                user.setPhone("14141343212");
                 user.setUserProfile("我是假数据");
                 user.setEmail("123@wqe.com");
                 user.setUserAvatar("https://brandlogos.net/wp-content/uploads/2021/11/java-logo.png");
