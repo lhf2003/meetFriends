@@ -79,7 +79,7 @@ public class UserController {
     }
 
     @ApiOperation("用户注销")
-    @PostMapping("/logout")
+    @GetMapping("/logout")
     public BaseResponse userLogout(HttpServletRequest request) {
         if (request == null) {
             throw new BusinessException(ErrorCode.PARAM_ERROR, "请求参数为空");

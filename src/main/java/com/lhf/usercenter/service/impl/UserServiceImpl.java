@@ -55,15 +55,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
         if (userAccount.length() < 4) {
             throw new BusinessException(ErrorCode.PARAM_ERROR, "账号长度过短");
-
         }
         if (userPassword.length() < 8 || checkPassword.length() < 8) {
             throw new BusinessException(ErrorCode.PARAM_ERROR, "密码长度过短");
-
         }
         if (!userPassword.equals(checkPassword)) {
             throw new BusinessException(ErrorCode.PARAM_ERROR, "两次输入的密码不匹配");
-
         }
         //封装用户信息
         User user = new User();
@@ -78,14 +75,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         long count = userMapper.selectCount(queryWrapper);
         if (count > 0) {
             log.info("userAccount already exist");
-            return false;
+            throw new BusinessException(ErrorCode.PARAM_ERROR, "账号已存在");
         }
 
         //插入数据库
         boolean result = this.save(user);
         if (!result) {
             log.info("userRegister fail");
-            return false;
+            throw new BusinessException(ErrorCode.ERROR, "注册失败");
         }
         return result;
     }
@@ -116,7 +113,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         user = userMapper.selectOne(queryWrapper);
         if (user == null) {
             log.info("userAccount or userPassword is wrong");
-            throw new BusinessException(ErrorCode.USER_NOT_FOUND,"账号或密码错误");
+            throw new BusinessException(ErrorCode.USER_NOT_FOUND, "账号或密码错误");
         }
         //脱敏用户信息
         User safelyUser = getSafetyUser(user);

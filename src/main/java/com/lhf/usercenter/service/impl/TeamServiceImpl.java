@@ -344,13 +344,14 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
         if (pageNum != 0 && pageSize != 0) {
             queryWrapper.last("limit " + (pageNum - 1) * pageSize + ", " + pageSize);
         }
+        // 条件查询：所有符合上述条件的数据
         List<Team> teamList = this.list(queryWrapper);
         if (teamList == null) {
             return new ArrayList<>();
         }
 
-        List<TeamUserVO> teamUserVOList = new ArrayList<>();
         // 关联查询创建人的用户信息
+        List<TeamUserVO> teamUserVOList = new ArrayList<>();
         for (Team team : teamList) {
             userId = team.getUserId();
             if (userId == null) {
@@ -385,6 +386,9 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
 //        }
         // 3、查询已加入队伍的人数
         List<Long> teamIdList = teamUserVOList.stream().map(TeamUserVO::getId).collect(Collectors.toList());
+        if (teamIdList == null || teamIdList.isEmpty()) {
+            throw new BusinessException(ErrorCode.NULL_DATA);
+        }
         QueryWrapper<UserTeam> userTeamJoinQueryWrapper = new QueryWrapper<>();
         userTeamJoinQueryWrapper.in("teamId", teamIdList);
 
