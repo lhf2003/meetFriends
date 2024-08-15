@@ -29,7 +29,7 @@ public class ProCacheJob {
     @Resource
     private RedissonClient redissonClient;
     // 重点用户列表（为这些用户预热数据）
-    final static List<Long> mainUserList = Arrays.asList(1L);
+    final static List<Long> mainUserList = Arrays.asList(1L, 2L);
 
     // 定时预热数据，每天一点执行一次
     @Scheduled(cron = "0 42 11 * * ?")
