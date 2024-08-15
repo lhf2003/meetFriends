@@ -105,7 +105,7 @@ public class UserController {
 
     @ApiOperation("更改用户信息")
     @PostMapping("/update")
-    public BaseResponse<Integer> updateUser(User user, HttpServletRequest request) {
+    public BaseResponse<Integer> updateUser(@RequestBody User user, HttpServletRequest request) {
         if (user == null || request == null) {
             throw new BusinessException(ErrorCode.PARAM_ERROR);
         }

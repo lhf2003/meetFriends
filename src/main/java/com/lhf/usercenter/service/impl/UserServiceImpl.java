@@ -241,11 +241,16 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Override
     public int updateUser(User user, User loginUser) {
+        // 1、判断要修改的用户是否存在
         Long userId = user.getId();
         if (userId == null) {
             throw new BusinessException(ErrorCode.PARAM_ERROR);
         }
-
+        User oldUser = userMapper.selectById(userId);
+        if (oldUser == null) {
+            throw new BusinessException(ErrorCode.USER_NOT_FOUND);
+        }
+        // 2、开始修改用户信息
         // 判断user除id外其余属性是否都为空
         User validUser = new User();
         BeanUtils.copyProperties(user, validUser);
@@ -253,14 +258,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if (ObjectUtils.allNull(validUser)) {
             throw new BusinessException(ErrorCode.PARAM_ERROR);
         }
-
+        // 管理员或者当前登录用户才能修改用户信息
         if (!isAdmin(loginUser) && loginUser.getId() != userId) {
             throw new BusinessException(ErrorCode.AUTH_ERROR);
         }
-        User oldUser = userMapper.selectById(userId);
-        if (oldUser == null) {
-            throw new BusinessException(ErrorCode.USER_NOT_FOUND);
-        }
+        // 3、修改用户信息
         return userMapper.updateById(user);
     }
 
