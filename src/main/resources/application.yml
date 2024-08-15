@@ -21,7 +21,7 @@ spring:
 # 配置日志
 mybatis-plus:
   configuration:
-#    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    #    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
     # 关闭驼峰转换
     map-underscore-to-camel-case: false
     # 逻辑删除

@@ -5,11 +5,3 @@ spring:
     url: jdbc:mysql://139.159.143.140:3306/meet_friends?useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&serverTimezone=Asia/Shanghai
     username: meet_friends
     password: axDNPNeY2iDDptDX
-  mvc:
-    cors:
-      mappings:
-        - path: "/**"
-          allowed-origins: "http://139.159.143.140:8000"
-          allowed-methods: "GET,POST,PUT,DELETE"
-          allowed-headers: "*"
-          allow-credentials: true
