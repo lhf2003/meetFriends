@@ -5,3 +5,7 @@ spring:
     url: jdbc:mysql://139.159.143.140:3306/meet_friends?useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&serverTimezone=Asia/Shanghai
     username: meet_friends
     password: axDNPNeY2iDDptDX
+server:
+  session:
+    cookie:
+      domain: .meetfei.cn
