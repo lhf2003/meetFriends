@@ -146,4 +146,17 @@ public class UserController {
         List<User> userList = userService.matchUsers(num, loginUser);
         return ResultUtil.success(userList);
     }
+
+    @ApiOperation("根据id获取用户信息")
+    @GetMapping("/get")
+    public BaseResponse<User> getUserInfoById(Long userId) {
+        if (userId == null) {
+            throw new BusinessException(ErrorCode.PARAM_ERROR, "请求参数为空");
+        }
+        User user = userService.getById(userId);
+        if (user == null) {
+            throw new BusinessException(ErrorCode.USER_NOT_FOUND);
+        }
+        return ResultUtil.success(user);
+    }
 }

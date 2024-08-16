@@ -15,7 +15,8 @@ public class WebMvcConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
-                .allowedOrigins("http://139.159.143.140:8000", "http://meetfei.cn:8000", "http://www.meetfei.cn:8000")
+//                .allowedOrigins("http://139.159.143.140:8000", "http://meetfei.cn:8000", "http://www.meetfei.cn:8000")
+                .allowedOrigins("http://localhost:3000")
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
                 .allowCredentials(true);
@@ -25,7 +26,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
      * Cookie 配置
      * @return CookieSerializer
      */
-    @Bean
+/*    @Bean
     public CookieSerializer cookieSerializer() {
         DefaultCookieSerializer serializer = new DefaultCookieSerializer();
         serializer.setDomainName(".meetfei.cn"); // 修改为实际域名
@@ -35,5 +36,5 @@ public class WebMvcConfig implements WebMvcConfigurer {
         serializer.setUseSecureCookie(true); // For HTTPS
         serializer.setSameSite("None"); // For cross-site requests
         return serializer;
-    }
+    }*/
 }
