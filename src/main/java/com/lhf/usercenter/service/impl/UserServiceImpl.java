@@ -6,13 +6,11 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.lhf.usercenter.common.ErrorCode;
-import com.lhf.usercenter.contant.UserContant;
 import com.lhf.usercenter.exception.BusinessException;
 import com.lhf.usercenter.model.domain.User;
-import com.lhf.usercenter.model.vo.UserVO;
 import com.lhf.usercenter.service.UserService;
 import com.lhf.usercenter.mapper.UserMapper;
-import com.lhf.usercenter.utils.AlgorithmUtils;
+import com.lhf.usercenter.common.utils.AlgorithmUtils;
 import javafx.util.Pair;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
@@ -271,7 +269,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         // 1、获得当前登录用户
         User loginUser = getLoginUser(request);
         //指定缓存在redis中的路径
-        String key = "meetFriends.recommendUsers." + loginUser.getId();
+        String key = RECOMMEND_CACHE_KEY_PREFIX + loginUser.getId();
         ValueOperations<String, Object> ops = redisTemplate.opsForValue();
         Page<User> userPage = (Page<User>) ops.get(key);
         List<User> userList;
@@ -322,7 +320,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         for (User user : userList) {
             String userTags = user.getTags();
             // 如果当前用户没有标签或者当前用户是登录用户，则跳过
-            if (StringUtils.isBlank(userTags) || user.getId() == loginUser.getId()) {
+            if (StringUtils.isBlank(userTags) || user.getId().equals(loginUser.getId())) {
                 continue;
             }
             List<String> userTagList = gson.fromJson(userTags, new TypeToken<List<String>>() {
@@ -348,7 +346,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                 .map(this::getSafetyUser)
                 .collect(Collectors.groupingBy(User::getId));
 
-        // 因为上面查询使用in打乱了顺序，所以根据上面有序的用户id列表重新赋值排序
+        // 因为在脱敏查询中使用in打乱了顺序，所以需要根据上面有序的用户id列表重新赋值排序
         List<User> finalUserList = new ArrayList<>();
         for (Long userId : userListVo) {
             finalUserList.add(userIdUserListMap.get(userId).get(0));
@@ -363,7 +361,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             throw new BusinessException(ErrorCode.PARAM_ERROR);
         }
 
-        // 第一种方式使用SQL查询
+        // 1、第一种方式使用SQL查询
 /*
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
         for (String tagName : tagNameList) {
@@ -372,37 +370,37 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         List<User> userList = userMapper.selectList(queryWrapper);
         return userList.stream().map(this::getSafetyUser).collect(Collectors.toList());
 */
-
+        // 2、从内存中查
         ValueOperations<String, Object> ops = redisTemplate.opsForValue();
         List<User> userList = (List<User>) ops.get(ALL_USER_CACHE_KEY);
+        // 内存中没有数据，从数据库中查询并存到redis中，方便下次查询
         if (userList == null) {
-            userList = userMapper.selectList(new QueryWrapper<>());
-            // 存入redis，超时时间24小时
-            ops.set(ALL_USER_CACHE_KEY, userList, 24, TimeUnit.HOURS);
+            QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+            queryWrapper.isNotNull("tags");
+            queryWrapper.select("id", "tags");
+            userList = userMapper.selectList(queryWrapper);
+            ops.set(ALL_USER_CACHE_KEY, userList, 24, TimeUnit.HOURS); // 存入redis，超时时间24小时
         }
-        List<User> safetyUserList = userList.stream().map(this::getSafetyUser).collect(Collectors.toList());
-        // 第二种方式在内存查询
-//        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
-//        List<User> userList = userMapper.selectList(queryWrapper);
-//        List<User> safetyUserList = new ArrayList<>();
-//        Gson gson = new Gson();
-//        // 遍历用户列表，校验是否匹配tagNameList
-//        for (User user : userList) {
-//            boolean flag = true;
-//            String userTags = user.getTags();
-//            Set<String> tagNameSet = gson.fromJson(userTags, new TypeToken<Set<String>>() {
-//            }.getType());
-//            tagNameSet = Optional.ofNullable(tagNameSet).orElse(new HashSet<>());
-//            for (String temp : tagNameList) {
-//                if (!tagNameSet.contains(temp)) {
-//                    flag = false;
-//                    break;
-//                }
-//            }
-//            if (flag) {
-//                safetyUserList.add(user);
-//            }
-//        }
+
+        List<User> safetyUserList = new ArrayList<>();
+        Gson gson = new Gson();
+        // 遍历用户列表，校验是否匹配tagNameList
+        for (User user : userList) {
+            boolean flag = true;
+            String userTags = user.getTags();
+            Set<String> tagNameSet = gson.fromJson(userTags, new TypeToken<Set<String>>() {
+            }.getType());
+            tagNameSet = Optional.ofNullable(tagNameSet).orElse(new HashSet<>());
+            for (String temp : tagNameList) {
+                if (!tagNameSet.contains(temp)) {
+                    flag = false;
+                    break;
+                }
+            }
+            if (flag) {
+                safetyUserList.add(user);
+            }
+        }
         return safetyUserList.stream().map(this::getSafetyUser).collect(Collectors.toList());
     }
 }

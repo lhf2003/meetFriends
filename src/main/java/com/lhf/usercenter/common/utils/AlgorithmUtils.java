@@ -1,4 +1,4 @@
-package com.lhf.usercenter.utils;
+package com.lhf.usercenter.common.utils;
 
 import java.util.List;
 import java.util.Objects;
