@@ -1,5 +1,6 @@
 package com.lhf.usercenter;
 
+import com.lhf.usercenter.common.utils.MailUtils;
 import com.lhf.usercenter.model.domain.User;
 import com.lhf.usercenter.service.UserService;
 import org.junit.jupiter.api.Assertions;
@@ -55,8 +56,11 @@ class UserCenterApplicationTests {
 
         //测试获取对象
         System.out.println(ops.get("user"));
+    }
 
-
+    @Test
+    void tetsSendMail() {
+        MailUtils.sendMail("lhf97777@gmail.com", "123");
     }
 
 }

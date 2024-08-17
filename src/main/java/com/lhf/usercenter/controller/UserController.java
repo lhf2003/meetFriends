@@ -3,7 +3,9 @@ package com.lhf.usercenter.controller;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.lhf.usercenter.common.BaseResponse;
 import com.lhf.usercenter.common.ErrorCode;
+import com.lhf.usercenter.common.utils.MailUtils;
 import com.lhf.usercenter.common.utils.ResultUtil;
+import com.lhf.usercenter.common.utils.VerificationCodeUtil;
 import com.lhf.usercenter.exception.BusinessException;
 import com.lhf.usercenter.model.domain.User;
 import com.lhf.usercenter.model.request.UserLoginRequest;
@@ -29,17 +31,17 @@ public class UserController {
 
     @ApiOperation("用户注册")
     @PostMapping("/register")
-    public BaseResponse userRegister(@RequestBody UserRegisterRequest userRegisterRequest) {
+    public BaseResponse<Boolean> userRegister(@RequestBody UserRegisterRequest userRegisterRequest) {
         if (userRegisterRequest == null) {
-            throw new BusinessException(ErrorCode.PARAM_ERROR, "请求参数为空");
+            throw new BusinessException(ErrorCode.PARAM_ERROR);
         }
         String userAccount = userRegisterRequest.getUserAccount();
         String userPassword = userRegisterRequest.getUserPassword();
         String checkPassword = userRegisterRequest.getCheckPassword();
         if (StringUtils.isAllBlank(userAccount, userPassword, checkPassword)) {
-            throw new BusinessException(ErrorCode.PARAM_ERROR, "部分请求参数为空");
+            throw new BusinessException(ErrorCode.PARAM_ERROR);
         }
-        boolean result = userService.userRegister(userAccount, userPassword, checkPassword);
+        boolean result = userService.userRegister(userRegisterRequest);
         return ResultUtil.success(result);
     }
 
@@ -158,5 +160,25 @@ public class UserController {
             throw new BusinessException(ErrorCode.USER_NOT_FOUND);
         }
         return ResultUtil.success(user);
+    }
+
+    @ApiOperation("生成验证码")
+    @GetMapping("/get/verifyCode")
+    public BaseResponse<String> generateCode(String registerMethod) {
+        if (StringUtils.isBlank(registerMethod)) {
+            throw new BusinessException(ErrorCode.PARAM_ERROR, "无效的注册方式");
+        }
+        // 生成验证码
+        String code = VerificationCodeUtil.generateCode();
+        if (StringUtils.isBlank(code)) {
+            throw new BusinessException(ErrorCode.ERROR, "验证码生成失败");
+        }
+        // 存储验证码，method是用户选择的注册方式（邮箱/手机号）
+        VerificationCodeUtil.storeCode(registerMethod, code);
+        // 判断注册方式，如果是邮箱则发送邮件，如果是手机号则发送短信
+        if (StringUtils.contains(registerMethod, "@")) {
+            MailUtils.sendMail(registerMethod, code);
+        }
+        return ResultUtil.success(code);
     }
 }

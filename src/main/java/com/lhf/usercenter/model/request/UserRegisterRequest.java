@@ -19,6 +19,15 @@ public class UserRegisterRequest implements Serializable {
      */
     private String checkPassword;
     /**
+     * 验证方式
+     */
+    private String registerMethod;
+
+    /**
+     * 验证码
+     */
+    private String verifyCode;
+    /**
      * 序列化
      */
     private static final long serialVersionUID = 1L;

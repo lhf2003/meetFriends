@@ -3,6 +3,7 @@ package com.lhf.usercenter.service;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.lhf.usercenter.model.domain.User;
+import com.lhf.usercenter.model.request.UserRegisterRequest;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
@@ -16,12 +17,10 @@ public interface UserService extends IService<User> {
     /**
      * 用户注册
      *
-     * @param userAccount   用户账号
-     * @param userPassword  用户密码
-     * @param checkPassword 确认密码
+     * @Param userRegisterRequest 用户注册请求
      * @return 是否成功
      */
-    boolean userRegister(String userAccount, String userPassword, String checkPassword);
+    boolean userRegister(UserRegisterRequest userRegisterRequest);
 
     /**
      * 用户登录

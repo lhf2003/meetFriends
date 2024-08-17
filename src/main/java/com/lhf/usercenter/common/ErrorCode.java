@@ -2,6 +2,7 @@ package com.lhf.usercenter.common;
 
 /**
  * 枚举类
+ *
  * @Author: lhf
  */
 public enum ErrorCode {
@@ -12,7 +13,8 @@ public enum ErrorCode {
     NULL_DATA(40004, "数据为空"),
     AUTH_ERROR(40005, "权限不足"),
     SUCCESS(0, "操作成功"),
-    ERROR(50000, "操作失败");
+    ERROR(50000, "操作失败"),
+    SEND_MAIL_ERROR(50001, "发送邮件失败");
 
     private int code;
     private String message;

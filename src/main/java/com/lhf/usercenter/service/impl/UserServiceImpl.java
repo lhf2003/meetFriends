@@ -6,8 +6,10 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.lhf.usercenter.common.ErrorCode;
+import com.lhf.usercenter.common.utils.VerificationCodeUtil;
 import com.lhf.usercenter.exception.BusinessException;
 import com.lhf.usercenter.model.domain.User;
+import com.lhf.usercenter.model.request.UserRegisterRequest;
 import com.lhf.usercenter.service.UserService;
 import com.lhf.usercenter.mapper.UserMapper;
 import com.lhf.usercenter.common.utils.AlgorithmUtils;
@@ -46,8 +48,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     public static final String SALT = "lhf";
 
     @Override
-    public boolean userRegister(String userAccount, String userPassword, String checkPassword) {
+    public boolean userRegister(UserRegisterRequest userRegisterRequest) {
         //校验参数是否合法
+        String userAccount = userRegisterRequest.getUserAccount();
+        String userPassword = userRegisterRequest.getUserPassword();
+        String checkPassword = userRegisterRequest.getCheckPassword();
+
         if (StringUtils.isAllBlank(userAccount, userPassword, checkPassword)) {
             throw new BusinessException(ErrorCode.PARAM_ERROR, "参数为空");
         }
@@ -60,8 +66,24 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if (!userPassword.equals(checkPassword)) {
             throw new BusinessException(ErrorCode.PARAM_ERROR, "两次输入的密码不匹配");
         }
-        //封装用户信息
+        // 校验验证方式和验证码
+        String registerMethod = userRegisterRequest.getRegisterMethod();
+        if (StringUtils.isBlank(registerMethod)) {
+            throw new BusinessException(ErrorCode.PARAM_ERROR, "注册方式不能为空");
+        }
+        String verifyCode = userRegisterRequest.getVerifyCode();
+        boolean verifyResult = VerificationCodeUtil.verifyCode(registerMethod, verifyCode);
+        if (StringUtils.isBlank(verifyCode) || !verifyResult) {
+            throw new BusinessException(ErrorCode.PARAM_ERROR, "验证码错误");
+        }
+
+        // 封装用户信息
         User user = new User();
+        if (registerMethod.contains("@")) {
+            user.setEmail(registerMethod);
+        } else {
+            user.setPhone(registerMethod);
+        }
         user.setUserAccount(userAccount);
         //加密密码
         String handledPassword = DigestUtils.md5DigestAsHex((SALT + userPassword).getBytes());
