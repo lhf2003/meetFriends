@@ -18,6 +18,11 @@ spring:
   mvc:
     pathmatch:
       matching-strategy: ant_path_matcher
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 1MB
+      max-request-size: 1MB
 # 配置日志
 mybatis-plus:
   configuration:
@@ -39,3 +44,18 @@ server:
       domain: localhost
 knife4j:
   enable: true
+
+# huawei ods
+huawei:
+  obs:
+    ak: UZ8ZU5TAAPZLGW5IHL1A
+    sk: cqrKbkpm3U4xULx3zessbcybyxGfkWPtJjcebn1w
+    # 上传的endPoint
+    upload:
+      endPoint: obs.cn-south-1.myhuaweicloud.com
+    # 访问的endPoint
+    access:
+      endPoint: obs.cn-south-1.myhuaweicloud.com
+    # 桶
+    bucketName: user-avatars
+    urlPrefix: http://cdn.meetfei.cn/
