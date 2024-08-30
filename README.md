@@ -6,7 +6,7 @@
 
 **MeetFriends** 通过个性化的标签搜索与“心动模式”匹配，帮助用户找到适合自己的社交圈。心动模式不仅仅是简单的匹配，而是通过先进的编辑距离算法，深度挖掘用户标签背后的潜在联系，精准推荐与你产生共鸣的用户。你还可以创建或加入队伍，与志同道合的朋友畅聊。
 
-前端代码参考： [meetFriends-front-master ]( https://github.com/lhf2003/meetFriends-front-master )
+前端代码参考： [meetFriends-front-master ]( https://github.com/lhf2003/meetFriends-front-master ) </br>
 在线访问地址： [meetFriends]( http://139.159.143.140:8000 )
 ## 技术栈
 - **Java 8** 
