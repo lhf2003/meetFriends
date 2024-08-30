@@ -17,6 +17,8 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import java.util.concurrent.TimeUnit;
+
 import static com.lhf.usercenter.contant.UserContant.USER_LOGIN_STATUS;
 
 @RestController
@@ -58,6 +60,8 @@ public class ObsController {
             user.setUserAvatar(url);
             // 更新数据库
             userService.updateById(user);
+            // 更新缓存
+            redisTemplate.opsForValue().set(USER_LOGIN_STATUS + userId, user, 24, TimeUnit.HOURS);
             // 响应数据
             return ResultUtil.success(url);
         }

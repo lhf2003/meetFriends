@@ -140,6 +140,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
         //将用户信息存入session
         request.getSession().setAttribute(USER_LOGIN_STATUS, safelyUser);
+        // 设置缓存
+        redisTemplate.opsForValue().set(USER_LOGIN_STATUS + safelyUser.getId(), safelyUser, 3600 * 24, TimeUnit.SECONDS);
         return safelyUser;
     }
 
@@ -244,7 +246,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     public User getCurrentUser(HttpServletRequest request) {
         Object attribute = request.getSession().getAttribute(USER_LOGIN_STATUS);
-        return (User) attribute;
+        User user = (User) attribute;
+        Object obj = redisTemplate.opsForValue().get(USER_LOGIN_STATUS + user.getId());
+        if (obj != null) {
+            return (User) obj;
+        }
+        return user;
     }
 
     @Override
@@ -283,6 +290,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             throw new BusinessException(ErrorCode.AUTH_ERROR);
         }
         // 3、修改用户信息
+        // 更新缓存
+        ValueOperations<String, Object> ops = redisTemplate.opsForValue();
+        ops.set(USER_LOGIN_STATUS + loginUser.getId(), user, 24, TimeUnit.HOURS);
         return userMapper.updateById(user);
     }
 
@@ -334,7 +344,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         // 2、获取当前登录用户的标签列表
         String tags = loginUser.getTags();
         Gson gson = new Gson();
-        List<String> currentUserTagList = gson.fromJson(tags, new TypeToken<List<String>>() {}.getType());
+        List<String> currentUserTagList = gson.fromJson(tags, new TypeToken<List<String>>() {
+        }.getType());
         // 存放用户相似度的列表（用户:相似度）
         List<Pair<User, Long>> list = new ArrayList<>();
         // 3、计算当前登录用户与所有有标签用户的相似度，并排序
@@ -344,7 +355,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             if (StringUtils.isBlank(userTags) || user.getId().equals(loginUser.getId())) {
                 continue;
             }
-            List<String> userTagList = gson.fromJson(userTags, new TypeToken<List<String>>() {}.getType());
+            List<String> userTagList = gson.fromJson(userTags, new TypeToken<List<String>>() {
+            }.getType());
             // 计算编辑距离（值越小，相似度越高）
             long distance = AlgorithmUtils.minDistance(currentUserTagList, userTagList);
             // 将用户和相似度存入列表
