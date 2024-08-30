@@ -179,6 +179,7 @@ public class UserController {
         if (StringUtils.contains(registerMethod, "@")) {
             MailUtils.sendMail(registerMethod, code);
         }
+        // TODO 发送手机验证码
         return ResultUtil.success(code);
     }
 }

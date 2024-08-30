@@ -34,7 +34,7 @@ public class PreCacheJob {
     final static List<Long> mainUserList = Arrays.asList(1L, 2L);
 
     // 定时预热数据，每天一点执行一次
-    @Scheduled(cron = "0 12 22 * * ?")
+    @Scheduled(cron = "0 0 2 * * ?")
     public void doCache() {
         boolean flag = true;
         // 1、定义分布式锁key

@@ -311,8 +311,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         userList = userPage.getRecords();
         List<User> safetyUserList = userList.stream().map(this::getSafetyUser).collect(Collectors.toList());
         userPage.setRecords(safetyUserList);
-        // 3.2 存入缓存,一定要指定过期时间，防止缓存雪崩！！！！！！！！！！！！！！！
-        ops.set(key, userPage, 24, TimeUnit.HOURS);
+        // 3.2 存入缓存,一定要指定过期时间
+        ops.set(key, userPage, 10, TimeUnit.SECONDS);
         return userPage;
     }
 
@@ -334,9 +334,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         // 2、获取当前登录用户的标签列表
         String tags = loginUser.getTags();
         Gson gson = new Gson();
-        List<String> tagList = gson.fromJson(tags, new TypeToken<List<String>>() {
-        }.getType());
-        // 存放用户和相似度的列表（用户:相似度）
+        List<String> currentUserTagList = gson.fromJson(tags, new TypeToken<List<String>>() {}.getType());
+        // 存放用户相似度的列表（用户:相似度）
         List<Pair<User, Long>> list = new ArrayList<>();
         // 3、计算当前登录用户与所有有标签用户的相似度，并排序
         for (User user : userList) {
@@ -345,10 +344,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             if (StringUtils.isBlank(userTags) || user.getId().equals(loginUser.getId())) {
                 continue;
             }
-            List<String> userTagList = gson.fromJson(userTags, new TypeToken<List<String>>() {
-            }.getType());
+            List<String> userTagList = gson.fromJson(userTags, new TypeToken<List<String>>() {}.getType());
             // 计算编辑距离（值越小，相似度越高）
-            long distance = AlgorithmUtils.minDistance(tagList, userTagList);
+            long distance = AlgorithmUtils.minDistance(currentUserTagList, userTagList);
             // 将用户和相似度存入列表
             list.add(new Pair<>(user, distance));
         }

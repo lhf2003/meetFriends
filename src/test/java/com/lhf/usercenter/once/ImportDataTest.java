@@ -17,6 +17,9 @@ class ImportDataTest {
     @Resource
     private UserService userService;
 
+    /**
+     * 同步导入
+     */
     @Test
     void testImportData() {
         StopWatch stopWatch = new StopWatch();
@@ -51,6 +54,9 @@ class ImportDataTest {
         System.out.println("插入十万条数据总耗时：" + stopWatch.getTotalTimeSeconds()); // 输出总耗时
     }
 
+    /**
+     * 异步导入
+     */
     @Test
     void testImportDataByConcurrent() {
         StopWatch stopWatch = new StopWatch();
