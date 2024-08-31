@@ -93,6 +93,15 @@ public class User implements Serializable {
      * 标签json列表
      */
     private String tags;
+    /**
+     * 地址
+     */
+    private String address;
+    /**
+     * 位置距离
+     */
+    @TableField(exist = false)
+    private double distance;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;

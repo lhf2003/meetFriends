@@ -107,14 +107,14 @@ public class UserController {
 
     @ApiOperation("更改用户信息")
     @PostMapping("/update")
-    public BaseResponse<Integer> updateUser(@RequestBody User user, HttpServletRequest request) {
+    public BaseResponse<Boolean> updateUser(@RequestBody User user, HttpServletRequest request) {
         if (user == null || request == null) {
             throw new BusinessException(ErrorCode.PARAM_ERROR);
         }
         // 校验
         User loginUser = userService.getLoginUser(request);
         // 更新
-        int result = userService.updateUser(user, loginUser);
+        boolean result = userService.updateUser(user, loginUser);
         return ResultUtil.success(result);
     }
 

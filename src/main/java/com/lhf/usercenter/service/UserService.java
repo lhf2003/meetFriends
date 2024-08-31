@@ -106,7 +106,7 @@ public interface UserService extends IService<User> {
      */
     User getLoginUser(HttpServletRequest request);
 
-    int updateUser(User user, User loginUser);
+    boolean updateUser(User user, User loginUser);
 
     Page<User> recommendUsers(long pageNum, long pageSize, HttpServletRequest request);
 
