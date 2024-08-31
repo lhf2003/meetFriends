@@ -17,8 +17,11 @@ create table user
     isDelete     tinyint  default 0                 not null comment '是否删除，0-未删除，1-已删除',
     createTime   datetime default CURRENT_TIMESTAMP not null comment '创建时间',
     updateTime   datetime default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment '更新时间',
-    tags         varchar(1024)                      null comment '标签json列表'
+    tags         varchar(1024)                      null comment '标签json列表',
+    address      varchar(1024)                      null comment '用户地址'
 );
+
+
 
 
 -- 队伍表
