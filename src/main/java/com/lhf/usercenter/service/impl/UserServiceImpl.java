@@ -355,7 +355,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         userList = userPage.getRecords();
         // 计算其它用户与当前用户的距离
         ReturnLocationBean locationBean;
-        for (int i = 0; i < userList.size(); i++) {
+        for (int i = userList.size() - 1; i >= 0; i--) {
             User user = userList.get(i);
             // 不在页面展示自己的数据
             if (Objects.equals(user.getId(), loginUser.getId())) {
