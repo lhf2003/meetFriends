@@ -10,6 +10,7 @@ import com.lhf.usercenter.exception.BusinessException;
 import com.lhf.usercenter.model.domain.User;
 import com.lhf.usercenter.model.request.UserLoginRequest;
 import com.lhf.usercenter.model.request.UserRegisterRequest;
+import com.lhf.usercenter.service.RelationshipService;
 import com.lhf.usercenter.service.UserService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -20,7 +21,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
-import static com.lhf.usercenter.contant.UserContant.USER_LOGIN_STATUS;
+import static com.lhf.usercenter.contant.UserConstant.USER_LOGIN_STATUS;
 
 @Api("用户模块")
 @RestController
@@ -28,6 +29,8 @@ import static com.lhf.usercenter.contant.UserContant.USER_LOGIN_STATUS;
 public class UserController {
     @Resource
     private UserService userService;
+    @Resource
+    private RelationshipService relationshipService;
 
     @ApiOperation("用户注册")
     @PostMapping("/register")
@@ -181,5 +184,36 @@ public class UserController {
         }
         // TODO 发送手机验证码
         return ResultUtil.success(code);
+    }
+
+    @ApiOperation("获取粉丝数")
+    @GetMapping("/follows/{id}")
+    public BaseResponse<Long> getUserFollowNum(@PathVariable Long id) {
+        if (id == null) {
+            throw new BusinessException(ErrorCode.PARAM_ERROR);
+        }
+        long followNum = relationshipService.getFollowNum(id);
+        return ResultUtil.success(followNum);
+    }
+
+    @ApiOperation("获取关注数")
+    @GetMapping("/fans/{id}")
+    public BaseResponse<Long> getUserFansNum(@PathVariable Long id) {
+        if (id == null) {
+            throw new BusinessException(ErrorCode.PARAM_ERROR);
+        }
+        long fansNum = relationshipService.getFansNum(id);
+        return ResultUtil.success(fansNum);
+    }
+
+    @ApiOperation("关注用户")
+    @PostMapping("dofollow/{id}")
+    public BaseResponse<String> doFollow(@PathVariable Long id, HttpServletRequest httpServletRequest) {
+        if (id == null) {
+            throw new BusinessException(ErrorCode.PARAM_ERROR);
+        }
+        User loginUser = (User) httpServletRequest.getSession().getAttribute(USER_LOGIN_STATUS);
+        String result = relationshipService.followUser(id, loginUser);
+       return ResultUtil.success(result);
     }
 }

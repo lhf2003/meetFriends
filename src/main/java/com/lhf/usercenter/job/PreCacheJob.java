@@ -1,7 +1,7 @@
 package com.lhf.usercenter.job;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.lhf.usercenter.contant.UserContant;
+import com.lhf.usercenter.contant.UserConstant;
 import com.lhf.usercenter.model.domain.User;
 import com.lhf.usercenter.service.UserService;
 import lombok.extern.slf4j.Slf4j;
@@ -18,8 +18,8 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import static com.lhf.usercenter.contant.UserContant.ALL_USER_CACHE_KEY;
-import static com.lhf.usercenter.contant.UserContant.RECOMMEND_CACHE_KEY_PREFIX;
+import static com.lhf.usercenter.contant.UserConstant.ALL_USER_CACHE_KEY;
+import static com.lhf.usercenter.contant.UserConstant.RECOMMEND_CACHE_KEY_PREFIX;
 
 @Component
 @Slf4j
@@ -38,7 +38,7 @@ public class PreCacheJob {
     public void doCache() {
         boolean flag = true;
         // 1、定义分布式锁key
-        RLock lock = redissonClient.getLock(UserContant.PRE_CACHE_LOCK_KEY);
+        RLock lock = redissonClient.getLock(UserConstant.PRE_CACHE_LOCK_KEY);
         try {
             // 2、加锁，谁先到谁先执行，后来者等待，这里等待时间设置为0，因为是每天一次性的定时任务，后来者不需要等待去抢锁
             // 过期时间默认为30秒，防止死锁

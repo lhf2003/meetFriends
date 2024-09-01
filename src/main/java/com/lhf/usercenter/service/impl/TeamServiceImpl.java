@@ -6,7 +6,7 @@ import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.lhf.usercenter.common.ErrorCode;
-import com.lhf.usercenter.contant.UserContant;
+import com.lhf.usercenter.contant.UserConstant;
 import com.lhf.usercenter.exception.BusinessException;
 import com.lhf.usercenter.mapper.TeamMapper;
 import com.lhf.usercenter.model.TeamQuery;
@@ -26,7 +26,6 @@ import com.lhf.usercenter.service.UserTeamService;
 import org.apache.commons.lang3.StringUtils;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
-import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -174,7 +173,7 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
         // 校验用户是否为队伍的队长或管理员。
         User loginUser = userService.getLoginUser(request);
         if (loginUser == null ||
-                (!loginUser.getUserRole().equals(UserContant.USER_ADMIN) && !loginUser.getId().equals(team.getUserId()))) {
+                (!loginUser.getUserRole().equals(UserConstant.USER_ADMIN) && !loginUser.getId().equals(team.getUserId()))) {
             throw new BusinessException(ErrorCode.AUTH_ERROR);
         }
         return true;
@@ -194,7 +193,7 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
         if (loginUser == null) {
             throw new BusinessException(ErrorCode.USER_NOT_FOUND);
         }
-        return loginUser.getUserRole().equals(UserContant.USER_ADMIN);
+        return loginUser.getUserRole().equals(UserConstant.USER_ADMIN);
     }
 
     @Override

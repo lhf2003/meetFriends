@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.lhf.usercenter.mapper.ChatMessagesMapper">
+
+    <resultMap id="BaseResultMap" type="com.lhf.usercenter.model.domain.ChatMessages">
+        <id property="chatId" column="chatId" jdbcType="INTEGER"/>
+        <result property="senderId" column="senderId" jdbcType="INTEGER"/>
+        <result property="receiverId" column="receiverId" jdbcType="INTEGER"/>
+        <result property="message" column="message" jdbcType="VARCHAR"/>
+        <result property="timestamp" column="timestamp" jdbcType="TIMESTAMP"/>
+        <result property="readStatus" column="readStatus" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        chatId,senderId,receiverId,
+        message,timestamp,readStatus
+    </sql>
+
+    <!-- 更新消息阅读状态 -->
+    <update id="updateReadStatus" parameterType="java.util.List">
+        <foreach collection="chatIds" item="chatIdMap" separator=";">
+            UPDATE chat_messages
+            SET readStatus = 1
+            WHERE (senderId = #{chatIdMap.senderId} AND receiverId = #{chatIdMap.receiverId})
+            OR (senderId = #{chatIdMap.receiverId} AND receiverId = #{chatIdMap.senderId})
+        </foreach>
+    </update>
+</mapper>

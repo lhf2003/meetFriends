@@ -19,7 +19,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import java.util.concurrent.TimeUnit;
 
-import static com.lhf.usercenter.contant.UserContant.USER_LOGIN_STATUS;
+import static com.lhf.usercenter.contant.UserConstant.USER_LOGIN_STATUS;
 
 @RestController
 @RequestMapping("/obs")

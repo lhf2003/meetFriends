@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.lhf.usercenter.mapper.UserOnlineStatusMapper">
+
+    <resultMap id="BaseResultMap" type="com.lhf.usercenter.model.domain.UserOnlineStatus">
+            <id property="userId" column="userId" jdbcType="BIGINT"/>
+            <result property="isOnline" column="isOnline" jdbcType="TINYINT"/>
+            <result property="lastOnline" column="lastOnline" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        userId,isOnline,lastOnline
+    </sql>
+</mapper>

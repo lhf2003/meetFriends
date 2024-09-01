@@ -36,7 +36,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import static com.lhf.usercenter.contant.UserContant.*;
+import static com.lhf.usercenter.contant.UserConstant.*;
 
 /**
  * @author LHF

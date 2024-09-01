@@ -39,9 +39,9 @@ server:
   port: 8080
   servlet:
     context-path: /api
-  session:
-    cookie:
-      domain: localhost
+    session:
+      cookie:
+        domain: localhost
 knife4j:
   enable: true
 

@@ -16,7 +16,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
-                .allowedOrigins("http://139.159.143.140:8000","http://meetfei.cn:8000","http://www.meetfei.cn:8000")
+                .allowedOrigins("http://139.159.143.140:8000", "http://meetfei.cn:8000", "http://www.meetfei.cn:8000","http://localhost:3000")
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
                 .allowCredentials(true);  // 允许发送Cookie
