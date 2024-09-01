@@ -323,7 +323,7 @@ public class RelationshipServiceImpl extends ServiceImpl<RelationshipMapper, Rel
 
         // 根据id获取关注用户集合
         QueryWrapper<User> userQueryWrapper = new QueryWrapper<>();
-        userQueryWrapper.in("followedId", followerIds);
+        userQueryWrapper.in("id", followerIds);
         List<User> followers = userService.list(userQueryWrapper);
         List<User> safetyFollowers = new ArrayList<>();
 

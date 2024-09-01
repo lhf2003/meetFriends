@@ -12,6 +12,7 @@ import com.lhf.usercenter.exception.BusinessException;
 import com.lhf.usercenter.model.domain.ReturnLocationBean;
 import com.lhf.usercenter.model.domain.User;
 import com.lhf.usercenter.model.request.UserRegisterRequest;
+import com.lhf.usercenter.service.UserOnlineStatusService;
 import com.lhf.usercenter.service.UserService;
 import com.lhf.usercenter.mapper.UserMapper;
 import com.lhf.usercenter.common.utils.AlgorithmUtils;
@@ -48,6 +49,8 @@ import static com.lhf.usercenter.contant.UserConstant.*;
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
     @Resource
     private UserMapper userMapper;
+    @Resource
+    private UserOnlineStatusService userOnlineStatusService;
     @Resource
     private RedisTemplate<String, Object> redisTemplate;
 
@@ -160,6 +163,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                 redisTemplate.opsForGeo().add(USER_LOCATION_KEY, new Point(locationBean.getLng(), locationBean.getLat()), USER_LOGIN_STATUS + safelyUser.getId().toString());
             }
         }
+        // 更新用户在线状态
+        userOnlineStatusService.setUserStatus(user.getId(), 1);
+
         return safelyUser;
     }
 
@@ -205,6 +211,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      */
     @Override
     public boolean userLogout(HttpServletRequest request) {
+        User loginUser = this.getLoginUser(request);
+        userOnlineStatusService.setUserStatus(loginUser.getId(), 0);
         request.getSession().removeAttribute(USER_LOGIN_STATUS);
         return true;
     }

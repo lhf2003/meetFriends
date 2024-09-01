@@ -214,6 +214,27 @@ public class UserController {
         }
         User loginUser = (User) httpServletRequest.getSession().getAttribute(USER_LOGIN_STATUS);
         String result = relationshipService.followUser(id, loginUser);
-       return ResultUtil.success(result);
+        return ResultUtil.success(result);
+    }
+
+    @ApiOperation("判断是否关注")
+    @GetMapping("/isfans/{id}")
+    public BaseResponse<Boolean> isFans(@PathVariable Long id, HttpServletRequest httpServletRequest) {
+        if (id == null) {
+            throw new BusinessException(ErrorCode.PARAM_ERROR);
+        }
+        User loginUser = (User) httpServletRequest.getSession().getAttribute(USER_LOGIN_STATUS);
+        boolean result = relationshipService.isFans(id, loginUser);
+        return ResultUtil.success(result);
+    }
+
+    @ApiOperation("获取当前私聊用户对象")
+    @GetMapping("/get/{id}")
+    public BaseResponse<User> getCurrentChatUser(@PathVariable Long id) {
+        if (id == null) {
+            throw new BusinessException(ErrorCode.PARAM_ERROR);
+        }
+        User user = userService.getById(id);
+        return ResultUtil.success(user);
     }
 }
