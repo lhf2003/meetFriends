@@ -18,6 +18,7 @@ jobs:
       - name: Set up JDK 8
         uses: actions/setup-java@v3
         with:
+          distribution: 'temurin'  # 指定使用 Eclipse Temurin JDK 发行版
           java-version: '8'
 
       # 第三步：使用 Maven 打包
