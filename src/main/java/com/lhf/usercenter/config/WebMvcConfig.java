@@ -1,5 +1,7 @@
 package com.lhf.usercenter.config;
 
+import com.lhf.usercenter.filter.MyFilter;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.session.web.http.CookieSerializer;
@@ -25,13 +27,24 @@ public class WebMvcConfig implements WebMvcConfigurer {
      * Cookie 配置
      * @return CookieSerializer
      */
-/*    @Bean
-    public CookieSerializer cookieSerializer() {
-        DefaultCookieSerializer serializer = new DefaultCookieSerializer();
-        serializer.setDomainName(".meetfei.cn"); // 根域名设置为 .meetfei.cn
-        serializer.setCookieName("SESSIONID");
-        serializer.setCookieMaxAge(3600);  // 设置 Cookie 的生命周期，单位为秒
-        serializer.setUseHttpOnlyCookie(true);  // 设置 HttpOnly，增加安全性
-        return serializer;
-    }*/
+    @Bean
+    public CookieSerializer cookieSerializer(){
+        DefaultCookieSerializer cookieSerializer = new DefaultCookieSerializer();
+        cookieSerializer.setSameSite(null);
+        return cookieSerializer;
+    }
+
+    /**
+     * 过滤器
+     * @return FilterRegistrationBean
+     */
+    @Bean
+    public FilterRegistrationBean<MyFilter> myFilterRegistration() {
+        FilterRegistrationBean<MyFilter> registration = new FilterRegistrationBean<>();
+        registration.setFilter(new MyFilter());
+        registration.addUrlPatterns("/*");
+        registration.setName("myFilter");
+        registration.setOrder(1);
+        return registration;
+    }
 }
