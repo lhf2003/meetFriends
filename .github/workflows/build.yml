@@ -1,0 +1,45 @@
+name: Maven Build and Deploy
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 第一步：检出代码
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # 第二步：设置 JDK 8 环境
+      - name: Set up JDK 8
+        uses: actions/setup-java@v3
+        with:
+          java-version: '8'
+
+      # 第三步：使用 Maven 打包
+      - name: Build with Maven
+        run: mvn -B package --file pom.xml
+
+      # 第四步：通过 SSH 部署到服务器
+      - name: Deploy to CentOS server via SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SERVER_USER: huaweicloud
+          SERVER_IP: ${{ secrets.SERVER_IP }}
+          DEPLOY_PATH: /www/wwwroot/meet-friends-backend
+          JAR_NAME: meet-friends-0.0.1-SNAPSHOT.jar
+        run: |
+          echo "$SSH_PRIVATE_KEY" > private_key
+          chmod 600 private_key
+          scp -i private_key target/$JAR_NAME $SERVER_USER@$SERVER_IP:$DEPLOY_PATH/
+          ssh -i private_key $SERVER_USER@$SERVER_IP <<EOF
+            # 停止现有的服务（根据需要调整停止命令）
+            pkill -f 'java -jar $DEPLOY_PATH/$JAR_NAME'
+            # 启动新的服务
+            nohup java -jar $DEPLOY_PATH/$JAR_NAME > /dev/null 2>&1 &
+            exit
+          EOF
