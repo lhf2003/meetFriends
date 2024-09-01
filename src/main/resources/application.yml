@@ -17,7 +17,7 @@ spring:
     database: 1
   mvc:
     pathmatch:
-      matching-strategy: ant_path_matcher
+      matching-strategy: ANT_PATH_MATCHER
   servlet:
     multipart:
       enabled: true
@@ -39,9 +39,9 @@ server:
   port: 8080
   servlet:
     context-path: /api
-    session:
-      cookie:
-        domain: localhost
+#    session:
+#      cookie:
+#        domain: localhost
 knife4j:
   enable: true
 
