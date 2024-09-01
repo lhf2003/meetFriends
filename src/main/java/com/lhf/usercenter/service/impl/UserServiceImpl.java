@@ -1,5 +1,6 @@
 package com.lhf.usercenter.service.impl;
 
+import cn.hutool.core.lang.Pair;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -16,7 +17,6 @@ import com.lhf.usercenter.service.UserOnlineStatusService;
 import com.lhf.usercenter.service.UserService;
 import com.lhf.usercenter.mapper.UserMapper;
 import com.lhf.usercenter.common.utils.AlgorithmUtils;
-import javafx.util.Pair;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
