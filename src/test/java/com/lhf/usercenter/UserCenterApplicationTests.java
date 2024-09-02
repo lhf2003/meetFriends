@@ -72,7 +72,7 @@ class UserCenterApplicationTests {
 
     @Test
     void testSendMail() {
-        MailUtils.sendMail("lhf97777@gmail.com", "123", UserConstant.USER_REGISTER);
+        MailUtils.sendMail("15671389027@163.com", "123", UserConstant.USER_REGISTER);
     }
 
     @Test

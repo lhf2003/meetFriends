@@ -118,7 +118,7 @@ public final class MailUtils {
             case "qq.com":
                 return new String[]{"smtp.qq.com", "587"};
             case "163.com":
-                return new String[]{"smtp.163.com", "25"};
+                return new String[]{"smtp.163.com", "465 "};
             case "gmail.com":
                 return new String[]{"smtp.gmail.com", "587"};
             case "yahoo.com":

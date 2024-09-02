@@ -80,6 +80,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if (StringUtils.isBlank(registerMethod)) {
             throw new BusinessException(ErrorCode.PARAM_ERROR, "注册方式不能为空");
         }
+
         String verifyCode = userRegisterRequest.getVerifyCode();
         boolean verifyResult = VerificationCodeUtil.verifyCode(registerMethod, verifyCode);
         if (StringUtils.isBlank(verifyCode) || !verifyResult) {
@@ -100,11 +101,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
         //用户是否存在
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("userAccount", userAccount); //查询条件
+        queryWrapper.eq("userAccount", userAccount)
+                .or(wrapper -> wrapper.eq("email", registerMethod)
+                        .or()
+                        .eq("phone", registerMethod));
         long count = userMapper.selectCount(queryWrapper);
         if (count > 0) {
-            log.info("userAccount already exist");
-            throw new BusinessException(ErrorCode.PARAM_ERROR, "账号已存在");
+            log.info("账号或联系方式已存在");
+            throw new BusinessException(ErrorCode.PARAM_ERROR, "账号或联系方式已存在");
         }
 
         //插入数据库
