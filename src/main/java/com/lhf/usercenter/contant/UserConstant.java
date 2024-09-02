@@ -8,4 +8,7 @@ public class UserConstant {
     public static final String PRE_CACHE_LOCK_KEY = "meetfriends:precachejob:docache:lock";
     public static final String RECOMMEND_CACHE_KEY_PREFIX = "meetFriends.recommendUsers.";
     public static final String USER_LOCATION_KEY = "meetFriends:user:location:";
+    public static final Integer USER_REGISTER= 2;
+    public static final Integer USER_FIND_PASSWORD= 3;
+    public static final String SALT = "lhf";
 }

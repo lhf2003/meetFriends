@@ -9,6 +9,7 @@ import com.lhf.usercenter.common.utils.VerificationCodeUtil;
 import com.lhf.usercenter.exception.BusinessException;
 import com.lhf.usercenter.model.domain.User;
 import com.lhf.usercenter.model.request.UserLoginRequest;
+import com.lhf.usercenter.model.request.UserModifyPasswordRequest;
 import com.lhf.usercenter.model.request.UserRegisterRequest;
 import com.lhf.usercenter.service.RelationshipService;
 import com.lhf.usercenter.service.UserService;
@@ -21,7 +22,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
-import static com.lhf.usercenter.contant.UserConstant.USER_LOGIN_STATUS;
+import static com.lhf.usercenter.contant.UserConstant.*;
 
 @Api("用户模块")
 @RestController
@@ -165,25 +166,52 @@ public class UserController {
         return ResultUtil.success(user);
     }
 
-    @ApiOperation("生成验证码")
+    @ApiOperation("生成注册验证码")
     @GetMapping("/get/verifyCode")
     public BaseResponse<String> generateCode(String registerMethod) {
         if (StringUtils.isBlank(registerMethod)) {
-            throw new BusinessException(ErrorCode.PARAM_ERROR, "无效的注册方式");
+            throw new BusinessException(ErrorCode.PARAM_ERROR, "无效的验证方式");
         }
         // 生成验证码
         String code = VerificationCodeUtil.generateCode();
         if (StringUtils.isBlank(code)) {
             throw new BusinessException(ErrorCode.ERROR, "验证码生成失败");
         }
-        // 存储验证码，method是用户选择的注册方式（邮箱/手机号）
+        // 存储验证码，method是用户选择的验证方式（邮箱/手机号）
         VerificationCodeUtil.storeCode(registerMethod, code);
-        // 判断注册方式，如果是邮箱则发送邮件，如果是手机号则发送短信
+        // 判断验证方式，如果是邮箱则发送邮件，如果是手机号则发送短信
         if (StringUtils.contains(registerMethod, "@")) {
-            MailUtils.sendMail(registerMethod, code);
+            MailUtils.sendMail(registerMethod, code, USER_REGISTER);
         }
         // TODO 发送手机验证码
         return ResultUtil.success(code);
+    }
+
+    @ApiOperation("修改密码")
+    @PostMapping("/modify/password")
+    public BaseResponse<Integer> modifyPassword(@RequestBody UserModifyPasswordRequest userModifyPasswordRequest, HttpServletRequest httpServletRequest) {
+        if (userModifyPasswordRequest == null) {
+            throw new BusinessException(ErrorCode.PARAM_ERROR);
+        }
+        String oldPassword = userModifyPasswordRequest.getOldPassword();
+        String newPassword = userModifyPasswordRequest.getNewPassword();
+        String checkPassword = userModifyPasswordRequest.getCheckPassword();
+
+        if (StringUtils.isAllBlank(oldPassword, newPassword, checkPassword)) {
+            throw new BusinessException(ErrorCode.PARAM_ERROR);
+        }
+        int result = userService.modifyPassword(oldPassword, newPassword, checkPassword, httpServletRequest);
+        return ResultUtil.success(result);
+    }
+
+    @ApiOperation("找回密码")
+    @GetMapping("/find/password")
+    public BaseResponse<Integer> findPassword(@RequestParam("email") String email) {
+        if (StringUtils.isBlank(email)) {
+            throw new BusinessException(ErrorCode.PARAM_ERROR);
+        }
+        int result = userService.findPassword(email);
+        return ResultUtil.success(result);
     }
 
     @ApiOperation("获取粉丝数")

@@ -17,8 +17,8 @@ public interface UserService extends IService<User> {
     /**
      * 用户注册
      *
-     * @Param userRegisterRequest 用户注册请求
      * @return 是否成功
+     * @Param userRegisterRequest 用户注册请求
      */
     boolean userRegister(UserRegisterRequest userRegisterRequest);
 
@@ -119,4 +119,22 @@ public interface UserService extends IService<User> {
      */
     List<User> matchUsers(long num, User loginUser);
 
+    /**
+     * 找回密码
+     *
+     * @param email 邮箱
+     * @return 是否成功
+     */
+    int findPassword(String email);
+
+    /**
+     * 修改密码
+     *
+     * @param oldPassword        旧密码
+     * @param newPassword        新密码
+     * @param checkPassword      确认新密码
+     * @param httpServletRequest 请求
+     * @return 是否成功
+     */
+    int modifyPassword(String oldPassword, String newPassword, String checkPassword, HttpServletRequest httpServletRequest);
 }

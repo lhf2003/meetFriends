@@ -8,6 +8,7 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.lhf.usercenter.common.ErrorCode;
 import com.lhf.usercenter.common.utils.BaiduUtils;
+import com.lhf.usercenter.common.utils.MailUtils;
 import com.lhf.usercenter.common.utils.VerificationCodeUtil;
 import com.lhf.usercenter.exception.BusinessException;
 import com.lhf.usercenter.model.domain.ReturnLocationBean;
@@ -54,7 +55,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Resource
     private RedisTemplate<String, Object> redisTemplate;
 
-    public static final String SALT = "lhf";
 
     @Override
     public boolean userRegister(UserRegisterRequest userRegisterRequest) {
@@ -451,6 +451,50 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             finalUserList.add(userIdUserListMap.get(userId).get(0));
         }
         return finalUserList;
+    }
+
+    @Override
+    public int findPassword(String email) {
+        if (StringUtils.isBlank(email)) {
+            throw new BusinessException(ErrorCode.PARAM_ERROR);
+        }
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("email", email);
+        User user = userMapper.selectOne(queryWrapper);
+        if (user == null) {
+            throw new BusinessException(ErrorCode.USER_NOT_FOUND, "该邮箱未注册");
+        }
+        String newPassword = VerificationCodeUtil.generateCode();
+        MailUtils.sendMail(email, newPassword, USER_FIND_PASSWORD);
+        //加密密码
+        String handledPassword = DigestUtils.md5DigestAsHex((SALT + newPassword).getBytes());
+        user.setUserPassword(handledPassword);
+        return userMapper.updateById(user);
+    }
+
+    @Override
+    public int modifyPassword(String oldPassword, String newPassword, String checkPassword, HttpServletRequest httpServletRequest) {
+        if (StringUtils.isAllBlank(oldPassword, newPassword, checkPassword)) {
+            throw new BusinessException(ErrorCode.PARAM_ERROR);
+        }
+        User loginUser = getLoginUser(httpServletRequest);
+        Long userId = loginUser.getId();
+        User user = userMapper.selectById(userId);
+        String userPassword = user.getUserPassword();
+        oldPassword = DigestUtils.md5DigestAsHex((SALT + oldPassword).getBytes());
+        if (!userPassword.equals(oldPassword)) {
+            throw new BusinessException(ErrorCode.PARAM_ERROR, "旧密码错误");
+        }
+        if (!newPassword.equals(checkPassword)) {
+            throw new BusinessException(ErrorCode.PARAM_ERROR, "两次输入的新密码不匹配");
+        }
+        String handledPassword = DigestUtils.md5DigestAsHex((SALT + newPassword).getBytes());
+        loginUser.setUserPassword(handledPassword);
+
+        redisTemplate.opsForValue().getAndDelete(USER_LOGIN_STATUS + userId);
+        userOnlineStatusService.setUserStatus(loginUser.getId(), 0);
+        httpServletRequest.getSession().removeAttribute(USER_LOGIN_STATUS);
+        return userMapper.updateById(loginUser);
     }
 
 
