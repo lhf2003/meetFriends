@@ -1,6 +1,7 @@
 package com.lhf.usercenter.common.utils;
 
 import cn.hutool.core.date.LocalDateTimeUtil;
+import com.lhf.usercenter.contant.UserConstant;
 
 import javax.mail.*;
 import javax.mail.internet.InternetAddress;
@@ -26,7 +27,7 @@ public final class MailUtils {
      * @param verifyCode 邮件验证码
      * @return 是否发送成功
      */
-    public static boolean sendMail(String to, String verifyCode) {
+    public static boolean sendMail(String to, String verifyCode, int method) {
         String[] hostAndPort = getSmtpHostAndPort(to);
         String[] senderDetails = getSenderEmailAndPassword(to);
 
@@ -64,25 +65,34 @@ public final class MailUtils {
             MimeMessage message = new MimeMessage(mailSession);
             message.setFrom(new InternetAddress(user));
             message.setRecipient(Message.RecipientType.TO, new InternetAddress(to));
-            message.setSubject("MeetFriends 注册验证码");
-
             String time = LocalDateTimeUtil.format(LocalDateTimeUtil.now(), "yyyy-MM-dd HH:mm:ss");
-            String text = "<html>" +
-                    "<body>" +
-                    "<p>尊敬的用户：</p>" +
-                    "<p>您好！</p>" +
-                    "<p>欢迎您注册 <strong>MeetFriends</strong>。</p>" +
-                    "<p>您本次注册所需的验证码：<strong>" + verifyCode + "</strong></p>" +
-                    "<p>请您在 <u>5 分钟内完成验证</u>。如果验证码过期或遇到任何问题，请重新点击获取验证码。</p>" +
-                    "<p><strong>注意！</strong>此验证码涉及到您的账户安全，请不要随意告知他人。</p>" +
-                    "<p>感谢您的支持与配合，祝您注册顺利！</p>" +
-                    "<p><small>时间：" + time + "</small></p>" +
-                    "<p>如有问题，请联系我们 <a href=\"http://www.meetfei.cn\" target=\"_blank\">帮助中心</a>。</p>" +
-                    "</body>" +
-                    "</html>";
-
+            String text = "";
+            if (method == UserConstant.USER_REGISTER) {
+                message.setSubject("MeetFriends 注册验证码");
+                text = "<html>" +
+                        "<body>" +
+                        "<p>尊敬的用户：</p>" +
+                        "<p>您好！</p>" +
+                        "<p>欢迎您注册 <strong>MeetFriends</strong>。</p>" +
+                        "<p>您本次注册所需的验证码：<strong>" + verifyCode + "</strong></p>" +
+                        "<p>请您在 <u>5 分钟内完成验证</u>。如果验证码过期或遇到任何问题，请重新点击获取验证码。</p>" +
+                        "<p><strong>注意！</strong>此验证码涉及到您的账户安全，请不要随意告知他人。</p>" +
+                        "<p>感谢您的支持与配合，祝您注册顺利！</p>" +
+                        "<p><small>时间：" + time + "</small></p>" +
+                        "<p>如有问题，请联系我们 <a href=\"http://www.meetfei.cn\" target=\"_blank\">帮助中心</a>。</p>" +
+                        "</body>" +
+                        "</html>";
+            } else {
+                message.setSubject("MeetFriends 重置密码");
+                text = "<html>" +
+                        "<body>" +
+                        "<p>尊敬的用户：</p>" +
+                        "<p>您的新密码为：<strong>" + verifyCode + "</strong></p>" +
+                        "<p><small>时间：" + time + "</small></p>" +
+                        "</body>" +
+                        "</html>";
+            }
             message.setContent(text, "text/html;charset=UTF-8");
-
             Transport.send(message);
             return true;
         } catch (Exception e) {

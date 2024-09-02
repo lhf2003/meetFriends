@@ -2,6 +2,7 @@ package com.lhf.usercenter;
 
 import com.lhf.usercenter.common.utils.BaiduUtils;
 import com.lhf.usercenter.common.utils.MailUtils;
+import com.lhf.usercenter.contant.UserConstant;
 import com.lhf.usercenter.model.domain.ReturnLocationBean;
 import com.lhf.usercenter.model.domain.User;
 import com.lhf.usercenter.service.UserService;
@@ -71,7 +72,7 @@ class UserCenterApplicationTests {
 
     @Test
     void testSendMail() {
-        MailUtils.sendMail("lhf97777@gmail.com", "123");
+        MailUtils.sendMail("lhf97777@gmail.com", "123", UserConstant.USER_REGISTER);
     }
 
     @Test

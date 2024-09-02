@@ -18,7 +18,7 @@ public class VerificationCodeUtil {
         //存放生成的验证码
         StringBuilder verifyCode = new StringBuilder();
 
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < 8; i++) {
             int a = random.nextInt(62);//随机生成0-61之间的数，提供索引位置
             verifyCode.append(identificationCode.charAt(a));//用get 和提供的索引找到相应位置的数据给变量
         }
