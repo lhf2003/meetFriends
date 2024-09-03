@@ -66,11 +66,11 @@ public class UserController {
 
     @ApiOperation("搜索用户")
     @GetMapping("/search")
-    public BaseResponse<User> searchUserByUserName(String userAccount, HttpServletRequest request) {
-        if (StringUtils.isBlank(userAccount)) {
-            throw new BusinessException(ErrorCode.PARAM_ERROR, "请求参数为空");
+    public BaseResponse<User> searchUser(@RequestParam("userName") String userName) {
+        if (StringUtils.isBlank(userName)) {
+            throw new BusinessException(ErrorCode.PARAM_ERROR);
         }
-        User user = userService.searchUserByUserName(userAccount, request);
+        User user = userService.searchUser(userName);
         return ResultUtil.success(user);
     }
 

@@ -95,6 +95,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             user.setPhone(registerMethod);
         }
         user.setUserAccount(userAccount);
+        user.setUserName(VerificationCodeUtil.generateCode());
+        user.setUserAvatar("http://cdn.meetfei.cn/default-img/java-logo.png");
         //加密密码
         String handledPassword = DigestUtils.md5DigestAsHex((SALT + userPassword).getBytes());
         user.setUserPassword(handledPassword);
@@ -176,18 +178,18 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     /**
      * 根据用户账号名查询用户信息
      *
-     * @param userAccount 用户账号
-     * @param request     请求
+     * @param userName 昵称
      * @return 用户信息
      */
     @Override
-    public User searchUserByUserName(String userAccount, HttpServletRequest request) {
-        if (!isAdmin(request)) {
-            throw new BusinessException(ErrorCode.AUTH_ERROR);
+    public User searchUser(String userName) {
+        if (StringUtils.isBlank(userName)) {
+            throw new BusinessException(ErrorCode.PARAM_ERROR);
         }
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
-        queryWrapper.like("userAccount", userAccount);
-        return userMapper.selectOne(queryWrapper);
+        queryWrapper.eq("userName", userName);
+        User user = userMapper.selectOne(queryWrapper);
+        return getSafetyUser(user);
     }
 
     /**
@@ -318,7 +320,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             throw new BusinessException(ErrorCode.PARAM_ERROR);
         }
         // 管理员或者当前登录用户才能修改用户信息
-        if (!isAdmin(loginUser) && loginUser.getId() != userId) {
+        if (!(isAdmin(loginUser) || loginUser.getId().equals(userId))) {
             throw new BusinessException(ErrorCode.AUTH_ERROR);
         }
         // 3、修改用户信息
@@ -329,17 +331,19 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             log.error("修改用户{}信息失败", userId);
             return false;
         }
-        User newUser = userMapper.selectById(userId);
         // 更新缓存
         ValueOperations<String, Object> ops = redisTemplate.opsForValue();
-        ops.set(USER_LOGIN_STATUS + loginUser.getId(), newUser, 24, TimeUnit.HOURS);
-        // 地址缓存
-        GeoOperations<String, Object> geo = redisTemplate.opsForGeo();
-        ReturnLocationBean locationBean = BaiduUtils.addressToLongitude(user.getAddress());
-        if (locationBean == null) {
-            throw new BusinessException(ErrorCode.ERROR, "地址解析失败");
+        ops.set(USER_LOGIN_STATUS + loginUser.getId(), user, 24, TimeUnit.HOURS);
+        // 更新地址缓存
+        String address = user.getAddress();
+        if (address != null) {
+            GeoOperations<String, Object> geo = redisTemplate.opsForGeo();
+            ReturnLocationBean locationBean = BaiduUtils.addressToLongitude(address);
+            if (locationBean == null) {
+                throw new BusinessException(ErrorCode.ERROR, "地址解析失败");
+            }
+            geo.add(USER_LOCATION_KEY, new Point(locationBean.getLng(), locationBean.getLat()), USER_LOGIN_STATUS + loginUser.getId());
         }
-        geo.add(USER_LOCATION_KEY, new Point(locationBean.getLng(), locationBean.getLat()), USER_LOGIN_STATUS + loginUser.getId());
         return true;
     }
 
@@ -509,16 +513,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
 
         // 1、第一种方式使用SQL查询
-/*
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
         for (String tagName : tagNameList) {
             queryWrapper.like("tags", tagName);
         }
         List<User> userList = userMapper.selectList(queryWrapper);
-        return userList.stream().map(this::getSafetyUser).collect(Collectors.toList());
-*/
         // 2、从内存中查
-        ValueOperations<String, Object> ops = redisTemplate.opsForValue();
+/*        ValueOperations<String, Object> ops = redisTemplate.opsForValue();
         List<User> userList = (List<User>) ops.get(ALL_USER_CACHE_KEY);
         // 内存中没有数据，从数据库中查询并存到redis中，方便下次查询
         if (userList == null) {
@@ -527,7 +528,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             queryWrapper.select("id", "tags");
             userList = userMapper.selectList(queryWrapper);
             ops.set(ALL_USER_CACHE_KEY, userList, 24, TimeUnit.HOURS); // 存入redis，超时时间24小时
-        }
+        }*/
 
         List<User> safetyUserList = new ArrayList<>();
         Gson gson = new Gson();

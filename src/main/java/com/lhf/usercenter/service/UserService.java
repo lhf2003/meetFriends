@@ -52,11 +52,10 @@ public interface UserService extends IService<User> {
     /**
      * 根据用户名查询用户
      *
-     * @param userAccount 用户账号
-     * @param request     请求
+     * @param userName 昵称
      * @return 用户信息
      */
-    User searchUserByUserName(String userAccount, HttpServletRequest request);
+    User searchUser(String userName);
 
     /**
      * 根据标签名查询用户
