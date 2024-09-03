@@ -219,7 +219,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     public boolean userLogout(HttpServletRequest request) {
         User loginUser = this.getLoginUser(request);
         userOnlineStatusService.setUserStatus(loginUser.getId(), 0);
-        request.getSession().removeAttribute(USER_LOGIN_STATUS);
+        request.getSession().removeAttribute(USER_LOGIN_STATUS + loginUser.getId());
         return true;
     }
 
