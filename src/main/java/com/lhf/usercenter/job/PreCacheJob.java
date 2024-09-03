@@ -34,9 +34,9 @@ public class PreCacheJob {
     final static List<Long> mainUserList = Arrays.asList(1L, 2L);
 
     // 定时预热数据，每天一点执行一次
-    @Scheduled(cron = "0 0 2 * * ?")
+/*    @Scheduled(cron = "0 0 2 * * ?")
     public void doCache() {
-        boolean flag = true;
+//        boolean flag = true;
         // 1、定义分布式锁key
         RLock lock = redissonClient.getLock(UserConstant.PRE_CACHE_LOCK_KEY);
         try {
@@ -52,10 +52,10 @@ public class PreCacheJob {
 
                     ValueOperations<String, Object> ops = redisTemplate.opsForValue();
                     // 缓存一份全局的用户数据，只缓存一次
-                    if (flag) {
+   *//*                 if (flag) {
                         ops.set(ALL_USER_CACHE_KEY, safetyUserList, 24, TimeUnit.HOURS);
                         flag = false;
-                    }
+                    }*//*
                     // 缓存key：根据用户id生成缓存key
                     String key = RECOMMEND_CACHE_KEY_PREFIX + userId;
 
@@ -79,5 +79,5 @@ public class PreCacheJob {
             }
         }
 
-    }
+    }*/
 }
