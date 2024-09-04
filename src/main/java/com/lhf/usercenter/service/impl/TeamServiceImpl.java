@@ -561,6 +561,29 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
         return teamPage;
     }
 
+    @Override
+    public List<User> getTeamMembers(Long teamId) {
+        if (teamId == null || teamId <= 0) {
+            throw new BusinessException(ErrorCode.PARAM_ERROR);
+        }
+        QueryWrapper<UserTeam> userTeamQueryWrapper = new QueryWrapper<>();
+        userTeamQueryWrapper.eq("teamId", teamId);
+        List<UserTeam> userTeamList = userTeamService.list(userTeamQueryWrapper);
+        if (userTeamList == null || userTeamList.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<Long> userIdList = userTeamList.stream().map(UserTeam::getUserId).collect(Collectors.toList());
+        QueryWrapper<User> userQueryWrapper = new QueryWrapper<>();
+        userQueryWrapper.in("id", userIdList);
+        List<User> userList = userService.list(userQueryWrapper);
+        if (userList == null || userList.isEmpty()) {
+            throw new BusinessException(ErrorCode.ERROR, "当前队伍成员列表为空");
+        }
+        // 脱敏用户数据
+        List<User> safetyUserList = userList.stream().map(userService::getSafetyUser).collect(Collectors.toList());
+        return safetyUserList;
+    }
+
     // 获取队伍当前的人数
     private long countTeamUser(long teamId) {
         QueryWrapper<UserTeam> userTeamQueryWrapper = new QueryWrapper<>();

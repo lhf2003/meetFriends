@@ -9,6 +9,7 @@ import com.lhf.usercenter.common.utils.ResultUtil;
 import com.lhf.usercenter.exception.BusinessException;
 import com.lhf.usercenter.model.TeamQuery;
 import com.lhf.usercenter.model.domain.Team;
+import com.lhf.usercenter.model.domain.User;
 import com.lhf.usercenter.model.request.*;
 import com.lhf.usercenter.model.vo.TeamUserVO;
 import com.lhf.usercenter.service.TeamService;
@@ -141,5 +142,14 @@ public class TeamController {
         }
         List<TeamUserVO> createTeamList = teamService.getCreateTeamList(request);
         return ResultUtil.success(createTeamList);
+    }
+
+    @GetMapping("members")
+    public BaseResponse<List<User>> getTeamMembers(@RequestParam Long teamId) {
+        if ((teamId == null)) {
+            throw new BusinessException(ErrorCode.PARAM_ERROR);
+        }
+        List<User> teamMembers = teamService.getTeamMembers(teamId);
+        return ResultUtil.success(teamMembers);
     }
 }

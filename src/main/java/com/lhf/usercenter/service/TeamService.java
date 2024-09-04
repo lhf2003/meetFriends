@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.lhf.usercenter.model.TeamQuery;
 import com.lhf.usercenter.model.domain.Team;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.lhf.usercenter.model.domain.User;
 import com.lhf.usercenter.model.request.TeamJoinRequest;
 import com.lhf.usercenter.model.request.TeamQuitRequest;
 import com.lhf.usercenter.model.request.TeamRequest;
@@ -102,4 +103,11 @@ public interface TeamService extends IService<Team> {
      * @return
      */
     Page<Team> getTeamListByPage(TeamQuery teamQuery);
+
+    /**
+     * 获取队伍的成员列表
+     * @param teamId
+     * @return
+     */
+    List<User> getTeamMembers(Long teamId);
 }

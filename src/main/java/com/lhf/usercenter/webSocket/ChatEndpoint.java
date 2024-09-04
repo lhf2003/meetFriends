@@ -75,7 +75,7 @@ public class ChatEndpoint {
         ChatMessagesServiceImpl.loginUser = user;
         long userId = user.getId();
         onlineUsers.put(userId, session);
-        ChatMessagesService chatMessagesService = getChatMessagesService();
+        chatMessagesService = getChatMessagesService();
 
         // 标识消息已读
         boolean updateResult = chatMessagesService.updateUnReadMsg(chatIds);
@@ -115,14 +115,13 @@ public class ChatEndpoint {
             Session session1 = onlineUsers.get(receiverId);
             Session session2 = onlineUsers.get(senderId);
             boolean flag = true;
+            // 对方用户也在线
             if (session1 != null && session2 != null) {
-                if (resultMsg.getReceiverId() == receiverId && resultMsg.getSenderId() == senderId) { // 对方用户也在线
-                    String resultMessage = gson.toJson(resultMsg);
-                    // 通过 WebSocket 发送消息给接收者
-                    session1.getBasicRemote().sendText(resultMessage);
-                    msg.setReadStatus(1); // 连接中对话的消息为已读
-                    flag = false;
-                }
+                String resultMessage = gson.toJson(resultMsg);
+                // 通过 WebSocket 发送消息给接收者
+                session1.getBasicRemote().sendText(resultMessage);
+                msg.setReadStatus(1); // 连接中对话的消息为已读
+                flag = false;
             }
             if (flag) {
                 msg.setReadStatus(0); // 连接中对话的消息为未读

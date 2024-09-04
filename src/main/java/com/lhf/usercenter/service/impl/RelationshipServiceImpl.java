@@ -240,7 +240,7 @@ public class RelationshipServiceImpl extends ServiceImpl<RelationshipMapper, Rel
         List<User> friends = userService.list(userQueryWrapper);
         // 排除用户自己
         friends = friends.stream()
-                .filter(user -> user.getId() != loginUserId)
+                .filter(user -> !user.getId().equals(loginUserId))
                 .collect(Collectors.toList());
         // 构造数据
         List<FriendVO> friendVOList = new ArrayList<>();
