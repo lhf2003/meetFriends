@@ -126,20 +126,20 @@ public class TeamController {
     }
 
     @GetMapping("list/join")
-    public BaseResponse<List<Team>> getJoinTeamList(HttpServletRequest request) {
+    public BaseResponse<List<TeamUserVO>> getJoinTeamList(HttpServletRequest request) {
         if (request == null) {
             throw new BusinessException(ErrorCode.PARAM_ERROR);
         }
-        List<Team> joinTeamList = teamService.getJoinTeamList(request);
+        List<TeamUserVO> joinTeamList = teamService.getJoinTeamList(request);
         return ResultUtil.success(joinTeamList);
     }
 
     @GetMapping("list/create")
-    public BaseResponse<List<Team>> getCreateTeamList(HttpServletRequest request) {
+    public BaseResponse<List<TeamUserVO>> getCreateTeamList(HttpServletRequest request) {
         if (request == null) {
             throw new BusinessException(ErrorCode.PARAM_ERROR);
         }
-        List<Team> createTeamList = teamService.getCreateTeamList(request);
+        List<TeamUserVO> createTeamList = teamService.getCreateTeamList(request);
         return ResultUtil.success(createTeamList);
     }
 }

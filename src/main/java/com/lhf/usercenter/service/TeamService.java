@@ -85,7 +85,7 @@ public interface TeamService extends IService<Team> {
      * @param request http请求
      * @return 加入队伍数量
      */
-    List<Team> getJoinTeamList(HttpServletRequest request);
+    List<TeamUserVO> getJoinTeamList(HttpServletRequest request);
 
     /**
      * 获取当前用户创建队伍的数量
@@ -93,10 +93,11 @@ public interface TeamService extends IService<Team> {
      * @param request http请求
      * @return 创建队伍数量
      */
-    List<Team> getCreateTeamList(HttpServletRequest request);
+    List<TeamUserVO> getCreateTeamList(HttpServletRequest request);
 
     /**
      * 分页查询队伍
+     *
      * @param teamQuery
      * @return
      */

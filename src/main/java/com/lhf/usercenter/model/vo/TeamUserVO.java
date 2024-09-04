@@ -46,7 +46,7 @@ public class TeamUserVO implements Serializable {
     /**
      * 过期时间
      */
-    private Date expireTime;
+    private String expireTime;
 
     /**
      * 用户id
@@ -61,12 +61,12 @@ public class TeamUserVO implements Serializable {
     /**
      * 创建时间
      */
-    private Date createTime;
+    private String createTime;
 
     /**
      * 更新时间
      */
-    private Date updateTime;
+    private String updateTime;
 
     /**
      * 队伍创建人用户信息

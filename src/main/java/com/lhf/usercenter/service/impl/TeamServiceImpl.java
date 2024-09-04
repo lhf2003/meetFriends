@@ -1,6 +1,7 @@
 package com.lhf.usercenter.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.date.DateUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -358,6 +359,7 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
             }
             TeamUserVO teamUserVO = new TeamUserVO();
             BeanUtil.copyProperties(team, teamUserVO);
+            formateDate(team, teamUserVO);
             // 脱敏用户信息
             User user = userService.getById(userId);
             if (user != null) {
@@ -397,6 +399,24 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
         teamUserVOList.forEach(team -> team.setHasJoinNum(teamIdUserTeamList.getOrDefault(team.getId(), new ArrayList<>()).size()));
 
         return teamUserVOList;
+    }
+
+    /**
+     * 格式化时间
+     *
+     * @param team       team时间
+     * @param teamUserVO 返回给前端的格式化后的时间
+     */
+    private void formateDate(Team team, TeamUserVO teamUserVO) {
+        Date createTime = team.getCreateTime();
+        Date expireTime = team.getExpireTime();
+        Date updateTime = team.getUpdateTime();
+        String formatCreateDate = DateUtil.format(createTime, "YYYY-MM-dd");
+        String formatExpireTimeDate = DateUtil.format(expireTime, "YYYY-MM-dd");
+        String formatUpdateTime = DateUtil.format(updateTime, "YYYY-MM-dd");
+        teamUserVO.setCreateTime(formatCreateDate);
+        teamUserVO.setExpireTime(formatExpireTimeDate);
+        teamUserVO.setUpdateTime(formatUpdateTime);
     }
 
     @Override
@@ -463,25 +483,59 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
     }
 
     @Override
-    public List<Team> getJoinTeamList(HttpServletRequest request) {
+    public List<TeamUserVO> getJoinTeamList(HttpServletRequest request) {
         // 获取当前登录用户
         User loginUser = userService.getLoginUser(request);
         // 获取当前用户加入的队伍
         QueryWrapper<UserTeam> userTeamQueryWrapper = new QueryWrapper<>();
         userTeamQueryWrapper.eq("userId", loginUser.getId());
         List<UserTeam> userTeamList = userTeamService.list(userTeamQueryWrapper);
-        List<Long> teamIdList = userTeamList.stream().map(UserTeam::getTeamId).collect(Collectors.toList());
-        return teamMapper.selectList(new QueryWrapper<Team>().in("id", teamIdList));
+        List<Long> userTeamIdList = userTeamList.stream().map(UserTeam::getTeamId).collect(Collectors.toList());
+        List<Team> teamList = teamMapper.selectList(new QueryWrapper<Team>().in("id", userTeamIdList));
+        List<TeamUserVO> teamUserVOList = new ArrayList<>();
+        for (Team team : teamList) {
+            TeamUserVO teamUserVO = new TeamUserVO();
+            BeanUtil.copyProperties(team, teamUserVO);
+            formateDate(team, teamUserVO);
+            teamUserVOList.add(teamUserVO);
+        }
+        List<Long> teamIdList = teamUserVOList.stream().map(TeamUserVO::getId).collect(Collectors.toList());
+        if (teamIdList == null || teamIdList.isEmpty()) {
+            throw new BusinessException(ErrorCode.NULL_DATA);
+        }
+        // 队伍 id => 加入这个队伍的用户列表
+        Map<Long, List<UserTeam>> teamIdUserTeamList = userTeamList.stream().collect(Collectors.groupingBy(UserTeam::getTeamId));
+        teamUserVOList.forEach(team -> team.setHasJoinNum(teamIdUserTeamList.getOrDefault(team.getId(), new ArrayList<>()).size()));
+        return teamUserVOList;
     }
 
     @Override
-    public List<Team> getCreateTeamList(HttpServletRequest request) {
+    public List<TeamUserVO> getCreateTeamList(HttpServletRequest request) {
         // 获取当前登录用户
         User loginUser = userService.getLoginUser(request);
         // 获取当前用户创建的队伍
         QueryWrapper<Team> teamQueryWrapper = new QueryWrapper<>();
         teamQueryWrapper.eq("userId", loginUser.getId());
-        return teamMapper.selectList(teamQueryWrapper);
+        List<Team> teamList = teamMapper.selectList(teamQueryWrapper);
+        List<TeamUserVO> teamUserVOList = new ArrayList<>();
+        for (Team team : teamList) {
+            TeamUserVO teamUserVO = new TeamUserVO();
+            BeanUtil.copyProperties(team, teamUserVO);
+            formateDate(team, teamUserVO);
+            teamUserVOList.add(teamUserVO);
+        }
+        List<Long> teamIdList = teamUserVOList.stream().map(TeamUserVO::getId).collect(Collectors.toList());
+        if (teamIdList == null || teamIdList.isEmpty()) {
+            throw new BusinessException(ErrorCode.NULL_DATA);
+        }
+        QueryWrapper<UserTeam> userTeamJoinQueryWrapper = new QueryWrapper<>();
+        userTeamJoinQueryWrapper.in("teamId", teamIdList);
+
+        List<UserTeam> userTeamList = userTeamService.list(userTeamJoinQueryWrapper);
+        // 队伍 id => 加入这个队伍的用户列表
+        Map<Long, List<UserTeam>> teamIdUserTeamList = userTeamList.stream().collect(Collectors.groupingBy(UserTeam::getTeamId));
+        teamUserVOList.forEach(team -> team.setHasJoinNum(teamIdUserTeamList.getOrDefault(team.getId(), new ArrayList<>()).size()));
+        return teamUserVOList;
     }
 
     @Override
