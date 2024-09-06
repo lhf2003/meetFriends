@@ -39,13 +39,13 @@
 - **发帖**：让伙伴们随时随地写文章
 
 ## 部分页面展示
-[登录页面](meet-friends/imgs/1.png)
-[注册页面](meet-friends/imgs/2.png)
-[聊天页面](meet-friends/imgs/3.png)
-[个人信息页面](meet-friends/imgs/4.png)
-[队伍页面](meet-friends/imgs/5.png)
-[用户详细信息页面](meet-friends/imgs/7.png)
-[主页](meet-friends/imgs/8.png)
+![登录页面](meet-friends/imgs/1.png)
+![注册页面](meet-friends/imgs/2.png)
+![聊天页面](meet-friends/imgs/3.png)
+![个人信息页面](meet-friends/imgs/4.png)
+![队伍页面](meet-friends/imgs/5.png)
+![用户详细信息页面](meet-friends/imgs/7.png)
+![主页](meet-friends/imgs/8.png)
 
 
 
