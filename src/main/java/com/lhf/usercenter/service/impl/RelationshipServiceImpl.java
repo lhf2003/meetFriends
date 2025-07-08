@@ -3,7 +3,7 @@ package com.lhf.usercenter.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.lhf.usercenter.common.ErrorCode;
-import com.lhf.usercenter.exception.BusinessException;
+import com.lhf.usercenter.common.exception.BusinessException;
 import com.lhf.usercenter.mapper.RelationshipMapper;
 import com.lhf.usercenter.model.domain.Relationship;
 import com.lhf.usercenter.model.domain.User;
@@ -14,11 +14,14 @@ import com.lhf.usercenter.service.UserOnlineStatusService;
 import com.lhf.usercenter.service.UserService;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -33,6 +36,8 @@ public class RelationshipServiceImpl extends ServiceImpl<RelationshipMapper, Rel
 
     @Resource
     private RedissonClient redissonClient;
+    @Resource
+    private RedisTemplate redisTemplate;
 
     @Resource
     private UserService userService;
@@ -53,7 +58,7 @@ public class RelationshipServiceImpl extends ServiceImpl<RelationshipMapper, Rel
     @Override
     public String followUser(Long id, User loginUser) {
         // 校验参数防止空指针异常
-        if (id == null || id <= 0 || loginUser == null) {
+        if (id == null || id < 0 || loginUser == null) {
             throw new BusinessException(ErrorCode.PARAM_ERROR);
         }
         // 判断是否已关注用户
@@ -72,13 +77,20 @@ public class RelationshipServiceImpl extends ServiceImpl<RelationshipMapper, Rel
         try {
             while (true) {
                 // 只有一个线程能获取到锁
-                if (lock.tryLock(0, 30000L, TimeUnit.MILLISECONDS)) {
+                if (lock.tryLock(0, 10L, TimeUnit.SECONDS)) {
                     // 插入数据
                     Relationship followRelationship = new Relationship();
                     followRelationship.setFollowerId(loginUser.getId());
                     followRelationship.setFollowedId(id);
                     boolean saveResult = this.save(followRelationship);
                     if (saveResult) {
+                        ZSetOperations zSet = redisTemplate.opsForZSet();
+                        // 如果value不存在，则新增，并设置分数为1
+                        Boolean added = zSet.addIfAbsent("fansRankingList", id, 1);
+                        if(!added){
+                            // 如果value存在，则增加分数
+                            zSet.incrementScore("fansRankingList", id, 1);
+                        }
                         return "关注成功!";
                     } else {
                         return "关注失败!";
@@ -106,7 +118,7 @@ public class RelationshipServiceImpl extends ServiceImpl<RelationshipMapper, Rel
     @Override
     public String unFollowUser(Long id, User loginUser) {
         // 校验参数非空
-        if (id == null || id <= 0 || loginUser == null) {
+        if (id == null || id < 0 || loginUser == null) {
             throw new BusinessException(ErrorCode.PARAM_ERROR);
         }
         // 判断是否已关注用户
@@ -130,7 +142,7 @@ public class RelationshipServiceImpl extends ServiceImpl<RelationshipMapper, Rel
      */
     @Override
     public long getFansNum(Long id) {
-        if (id == null || id <= 0) {
+        if (id == null || id < 0) {
             throw new BusinessException(ErrorCode.PARAM_ERROR);
         }
         // 查询粉丝数量
@@ -147,7 +159,7 @@ public class RelationshipServiceImpl extends ServiceImpl<RelationshipMapper, Rel
      */
     @Override
     public long getFollowNum(Long id) {
-        if (id == null || id <= 0) {
+        if (id == null || id < 0) {
             throw new BusinessException(ErrorCode.PARAM_ERROR);
         }
         // 查询关注数量
@@ -244,7 +256,7 @@ public class RelationshipServiceImpl extends ServiceImpl<RelationshipMapper, Rel
                 .collect(Collectors.toList());
         // 构造数据
         List<FriendVO> friendVOList = new ArrayList<>();
-        friends.stream().forEach(user -> {
+        friends.forEach(user -> {
             FriendVO friendVO = new FriendVO();
             friendVO.setId(user.getId()); // 设置id
             friendVO.setName(user.getUserName()); // 设置昵称

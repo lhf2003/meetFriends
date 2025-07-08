@@ -7,8 +7,8 @@ import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.lhf.usercenter.common.ErrorCode;
-import com.lhf.usercenter.contant.UserConstant;
-import com.lhf.usercenter.exception.BusinessException;
+import com.lhf.usercenter.common.contant.UserConstant;
+import com.lhf.usercenter.common.exception.BusinessException;
 import com.lhf.usercenter.mapper.TeamMapper;
 import com.lhf.usercenter.model.TeamQuery;
 import com.lhf.usercenter.model.domain.Team;
@@ -206,7 +206,7 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
 
         // 队伍必须存在，只能加入未满、未过期的队伍
         Long teamId = teamJoinRequest.getTeamId();
-        if (teamId == null || teamId <= 0) {
+        if (teamId == null || teamId < 0) {
             throw new BusinessException(ErrorCode.PARAM_ERROR);
         }
 
@@ -430,7 +430,7 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
         User loginUser = userService.getLoginUser(request);
         // 校验队伍是否存在
         Long teamId = teamQuitRequest.getTeamId();
-        if (teamId == null || teamId <= 0) {
+        if (teamId == null || teamId < 0) {
             throw new BusinessException(ErrorCode.PARAM_ERROR);
         }
         Team team = this.getById(teamId);
@@ -563,7 +563,7 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
 
     @Override
     public List<User> getTeamMembers(Long teamId) {
-        if (teamId == null || teamId <= 0) {
+        if (teamId == null || teamId < 0) {
             throw new BusinessException(ErrorCode.PARAM_ERROR);
         }
         QueryWrapper<UserTeam> userTeamQueryWrapper = new QueryWrapper<>();
@@ -593,7 +593,7 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
 
     // 根据队伍id获取队伍
     private Team getTeamById(Long teamId) {
-        if (teamId == null || teamId <= 0) {
+        if (teamId == null || teamId < 0) {
             throw new BusinessException(ErrorCode.PARAM_ERROR);
         }
         Team team = this.getById(teamId);

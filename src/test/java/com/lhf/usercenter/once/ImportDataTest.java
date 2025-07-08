@@ -8,7 +8,7 @@ import org.springframework.util.StopWatch;
 
 import javax.annotation.Resource;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.*;
 
 
 @SpringBootTest
@@ -17,16 +17,20 @@ class ImportDataTest {
     @Resource
     private UserService userService;
 
+    private final ExecutorService executor = new ThreadPoolExecutor(16, 16, 0L,
+            TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(1024), new ThreadPoolExecutor.AbortPolicy());
+
     /**
      * 同步导入
      */
+
     @Test
     void testImportData() {
         StopWatch stopWatch = new StopWatch();
         List<User> userlist = null;
         // 插入十次
         stopWatch.start(); // 开始计时
-        for (int i = 0; i < 50; i++) {
+        for (int i = 0; i < 10; i++) {
             userlist = new ArrayList<>();
             int dataSize = 0;
             // 每次插入10000条数据
@@ -50,8 +54,7 @@ class ImportDataTest {
             userService.saveBatch(userlist);
         }
         stopWatch.stop(); // 停止计时
-        // 耗时24秒左右
-        System.out.println("插入十万条数据总耗时：" + stopWatch.getTotalTimeSeconds()); // 输出总耗时
+        System.out.println("插入十万条数据总耗时：" + stopWatch.getTotalTimeSeconds()); // 插入十万条数据总耗时：19.115535
     }
 
     /**
@@ -62,10 +65,12 @@ class ImportDataTest {
         StopWatch stopWatch = new StopWatch();
         // 插入十次
         stopWatch.start(); // 开始计时
-        CompletableFuture.runAsync(() -> {
-            List<User> userlist = null;
+
+        List<User> userlist = new ArrayList<>();
+        CompletableFuture<?>[] futures = new CompletableFuture[10];
+        try {
             for (int i = 0; i < 10; i++) {
-                userlist = new ArrayList<>();
+                userlist.clear(); // 复用 ArrayList
                 int dataSize = 0;
                 // 每次插入10000条数据
                 while (true) {
@@ -85,17 +90,21 @@ class ImportDataTest {
                     user.setTags(Collections.singletonList("\"假数据\"").toString());
                     userlist.add(user);
                 }
-                boolean result = userService.saveBatch(userlist);
-                if (result) {
-                    System.out.println("插入成功");
-                } else {
-                    System.out.println("插入失败");
-                }
+                futures[i] = CompletableFuture.runAsync(() -> {
+                    boolean result = userService.saveBatch(userlist);
+                    if (result) {
+                        System.out.println("插入成功");
+                    } else {
+                        System.out.println("插入失败");
+                    }
+                }, executor);
             }
-        });
-
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        CompletableFuture.allOf(futures);
         stopWatch.stop(); // 停止计时
-        // 耗时5~6秒左右
-        System.out.println("插入十万条数据总耗时：" + stopWatch.getTotalTimeSeconds()); // 输出总耗时
+        // 输出总耗时
+        System.out.println("插入十万条数据总耗时：" + stopWatch.getTotalTimeSeconds());
     }
 }

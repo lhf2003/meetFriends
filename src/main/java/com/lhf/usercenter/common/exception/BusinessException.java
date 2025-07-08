@@ -1,4 +1,4 @@
-package com.lhf.usercenter.exception;
+package com.lhf.usercenter.common.exception;
 
 import com.lhf.usercenter.common.ErrorCode;
 

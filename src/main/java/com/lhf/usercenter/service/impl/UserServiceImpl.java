@@ -10,10 +10,11 @@ import com.lhf.usercenter.common.ErrorCode;
 import com.lhf.usercenter.common.utils.BaiduUtils;
 import com.lhf.usercenter.common.utils.MailUtils;
 import com.lhf.usercenter.common.utils.VerificationCodeUtil;
-import com.lhf.usercenter.exception.BusinessException;
+import com.lhf.usercenter.common.exception.BusinessException;
 import com.lhf.usercenter.model.domain.ReturnLocationBean;
 import com.lhf.usercenter.model.domain.User;
 import com.lhf.usercenter.model.request.UserRegisterRequest;
+import com.lhf.usercenter.model.vo.UserVO;
 import com.lhf.usercenter.service.UserOnlineStatusService;
 import com.lhf.usercenter.service.UserService;
 import com.lhf.usercenter.mapper.UserMapper;
@@ -27,18 +28,20 @@ import org.springframework.data.geo.Point;
 import org.springframework.data.redis.core.GeoOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.data.redis.domain.geo.Metrics;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.DigestUtils;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import static com.lhf.usercenter.contant.UserConstant.*;
+import static com.lhf.usercenter.common.contant.UserConstant.*;
 
 /**
  * @author LHF
@@ -96,6 +99,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
         user.setUserAccount(userAccount);
         user.setUserName(VerificationCodeUtil.generateCode());
+        user.setAddress("北京市海淀区上地十街10号");
         user.setUserAvatar("http://cdn.meetfei.cn/default-img/java-logo.png");
         //加密密码
         String handledPassword = DigestUtils.md5DigestAsHex((SALT + userPassword).getBytes());
@@ -155,20 +159,22 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
         //将用户信息存入session
         request.getSession().setAttribute(USER_LOGIN_STATUS, safelyUser);
-        // 设置缓存
-        Object object = redisTemplate.opsForValue().get(USER_LOGIN_STATUS + safelyUser.getId());
-        if (object == null) {
-            redisTemplate.opsForValue().set(USER_LOGIN_STATUS + safelyUser.getId(), safelyUser, 3600 * 24, TimeUnit.SECONDS);
-            String address = safelyUser.getAddress();
+
+        String address = safelyUser.getAddress();
+        GeoOperations<String, Object> geo = redisTemplate.opsForGeo();
+        List<Point> position = geo.position(USER_LOCATION_KEY, USER_LOGIN_STATUS + safelyUser.getId().toString());
+        // 设置地址缓存
+        if (position == null || position.get(0) == null) {
             if (StringUtils.isNotBlank(address)) {
                 ReturnLocationBean locationBean = BaiduUtils.addressToLongitude(address);
                 if (locationBean == null) {
-                    throw new BusinessException(ErrorCode.ERROR, "地址解析失败");
+                    log.error("用户{}地址解析失败", safelyUser.getId());
                 }
                 log.info("为当前用户{}添加地址缓存", safelyUser.getId());
-                redisTemplate.opsForGeo().add(USER_LOCATION_KEY, new Point(locationBean.getLng(), locationBean.getLat()), USER_LOGIN_STATUS + safelyUser.getId().toString());
+                geo.add(USER_LOCATION_KEY, new Point(locationBean.getLng(), locationBean.getLat()), USER_LOGIN_STATUS + safelyUser.getId().toString());
             }
         }
+
         // 更新用户在线状态
         userOnlineStatusService.setUserStatus(user.getId(), 1);
 
@@ -187,7 +193,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             throw new BusinessException(ErrorCode.PARAM_ERROR);
         }
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("userName", userName);
+        queryWrapper.like("userName", userName);
         User user = userMapper.selectOne(queryWrapper);
         return getSafetyUser(user);
     }
@@ -217,9 +223,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      */
     @Override
     public boolean userLogout(HttpServletRequest request) {
-        User loginUser = this.getLoginUser(request);
-        userOnlineStatusService.setUserStatus(loginUser.getId(), 0);
-        request.getSession().removeAttribute(USER_LOGIN_STATUS + loginUser.getId());
+        request.getSession().invalidate();
         return true;
     }
 
@@ -278,14 +282,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * @param request
      */
     @Override
-    public User getCurrentUser(HttpServletRequest request) {
-        Object attribute = request.getSession().getAttribute(USER_LOGIN_STATUS);
-        User user = (User) attribute;
-        Object obj = redisTemplate.opsForValue().get(USER_LOGIN_STATUS + user.getId());
-        if (obj != null) {
-            return (User) obj;
-        }
-        return user;
+    public User getPageNumUser(HttpServletRequest request) {
+        return (User) request.getSession().getAttribute(USER_LOGIN_STATUS);
     }
 
     @Override
@@ -301,7 +299,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     @Override
-    public boolean updateUser(User user, User loginUser) {
+    public boolean updateUser(User user, HttpServletRequest request) {
+        // 校验
+        User loginUser = getLoginUser(request);
         // 1、判断要修改的用户是否存在
         Long userId = user.getId();
         if (userId == null) {
@@ -323,7 +323,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if (!(isAdmin(loginUser) || loginUser.getId().equals(userId))) {
             throw new BusinessException(ErrorCode.AUTH_ERROR);
         }
-        // 3、修改用户信息
+        // 3、修改用户信息 将新的值赋值给老用户
         boolean updateState = this.updateById(user);
         if (updateState) {
             log.info("修改用户{}信息成功", userId);
@@ -331,18 +331,18 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             log.error("修改用户{}信息失败", userId);
             return false;
         }
-        // 更新缓存
-        ValueOperations<String, Object> ops = redisTemplate.opsForValue();
-        ops.set(USER_LOGIN_STATUS + loginUser.getId(), user, 24, TimeUnit.HOURS);
-        // 更新地址缓存
+        // 更新session缓存
+        User newUser = userMapper.selectById(userId);
+        request.getSession().setAttribute(USER_LOGIN_STATUS, newUser);
+        // 如果修改了地址，就需要更新地址缓存
         String address = user.getAddress();
         if (address != null) {
             GeoOperations<String, Object> geo = redisTemplate.opsForGeo();
             ReturnLocationBean locationBean = BaiduUtils.addressToLongitude(address);
             if (locationBean == null) {
-                throw new BusinessException(ErrorCode.ERROR, "地址解析失败");
+                log.error("用户{}地址解析失败", user.getId());
             }
-            geo.add(USER_LOCATION_KEY, new Point(locationBean.getLng(), locationBean.getLat()), USER_LOGIN_STATUS + loginUser.getId());
+            geo.add(USER_LOCATION_KEY, new Point(locationBean.getLng(), locationBean.getLat()), USER_LOGIN_STATUS + user.getId());
         }
         return true;
     }
@@ -391,14 +391,43 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             }
             Distance distance = geo.distance(USER_LOCATION_KEY, USER_LOGIN_STATUS + loginUser.getId(), USER_LOGIN_STATUS + user.getId());
             Double userDistance = Optional.ofNullable(distance).map(Distance::getValue).orElse(0.0);
-            user.setDistance(userDistance);
+            user.setDistance(userDistance / 1000);
         }
         // 脱敏
         List<User> safetyUserList = userList.stream().map(this::getSafetyUser).collect(Collectors.toList());
         userPage.setRecords(safetyUserList);
         // 3.2 存入缓存,一定要指定过期时间
-        ops.set(key, userPage, 10, TimeUnit.HOURS);
+        ops.set(key, userPage, 12, TimeUnit.HOURS);
         return userPage;
+    }
+
+    @Override
+    public UserVO getUserVO(User user) {
+        if (user == null) {
+            return null;
+        }
+        UserVO userVO = new UserVO();
+        BeanUtils.copyProperties(user, userVO);
+        return userVO;
+    }
+
+    /**
+     * 获取当前登录用户（允许未登录）
+     *
+     * @param request
+     * @return
+     */
+    @Override
+    public User getLoginUserPermitNull(HttpServletRequest request) {
+        // 先判断是否已登录
+        Object userObj = request.getSession().getAttribute(USER_LOGIN_STATUS);
+        User currentUser = (User) userObj;
+        if (currentUser == null || currentUser.getId() == null) {
+            return null;
+        }
+        // 从数据库查询（追求性能的话可以注释，直接走缓存）
+        long userId = currentUser.getId();
+        return this.getById(userId);
     }
 
     /**

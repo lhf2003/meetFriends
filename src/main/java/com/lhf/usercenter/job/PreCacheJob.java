@@ -1,25 +1,16 @@
 package com.lhf.usercenter.job;
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.lhf.usercenter.contant.UserConstant;
-import com.lhf.usercenter.model.domain.User;
 import com.lhf.usercenter.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.ValueOperations;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-
-import static com.lhf.usercenter.contant.UserConstant.ALL_USER_CACHE_KEY;
-import static com.lhf.usercenter.contant.UserConstant.RECOMMEND_CACHE_KEY_PREFIX;
 
 @Component
 @Slf4j

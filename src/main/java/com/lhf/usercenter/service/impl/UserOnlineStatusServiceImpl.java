@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.lhf.usercenter.common.ErrorCode;
-import com.lhf.usercenter.exception.BusinessException;
+import com.lhf.usercenter.common.exception.BusinessException;
 import com.lhf.usercenter.mapper.UserOnlineStatusMapper;
 import com.lhf.usercenter.model.domain.UserOnlineStatus;
 import com.lhf.usercenter.service.UserOnlineStatusService;
@@ -30,7 +30,7 @@ public class UserOnlineStatusServiceImpl extends ServiceImpl<UserOnlineStatusMap
      */
     @Override
     public Integer getUserStatus(Long id) {
-        if (id == null || id <= 0) {
+        if (id == null || id < 0) {
             throw new BusinessException(ErrorCode.PARAM_ERROR);
         }
         // 获取用户登录状态
@@ -55,7 +55,7 @@ public class UserOnlineStatusServiceImpl extends ServiceImpl<UserOnlineStatusMap
      */
     @Override
     public Integer setUserStatus(Long id, Integer status) {
-        if (id == null || id <= 0) {
+        if (id == null || id < 0) {
             throw new BusinessException(ErrorCode.PARAM_ERROR);
         }
         Integer userStatus = this.getUserStatus(id);

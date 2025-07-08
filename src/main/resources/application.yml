@@ -8,13 +8,14 @@ spring:
     username: root
     password: 123456
   session:
-    timeout: 86400
+    timeout: 600
     store-type: redis
   # redis配置
   redis:
     host: 127.0.0.1
     port: 6379
     database: 1
+    timeout: 600
   mvc:
     pathmatch:
       matching-strategy: ANT_PATH_MATCHER
@@ -45,7 +46,7 @@ server:
 knife4j:
   enable: true
 
-# huawei ods
+# huawei obs
 huawei:
   obs:
     ak: UZ8ZU5TAAPZLGW5IHL1A
@@ -62,3 +63,8 @@ huawei:
 baidu:
   ak: Xxt5idmN3iqhNP0dxuN22Z5KMoDnK1me
   url: http://api.map.baidu.com/geocoding/v3/?output=json&location=showLocation
+
+ai:
+  url: https://api.siliconflow.cn/v1/chat/completions
+  model: deepseek-ai/DeepSeek-V3
+  key: sk-iizujlskzfuirjzyxwtoaeenisgnvbtmagdjeaimqmhwfjrr

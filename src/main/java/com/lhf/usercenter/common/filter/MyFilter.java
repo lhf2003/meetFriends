@@ -1,6 +1,8 @@
-package com.lhf.usercenter.filter;
+package com.lhf.usercenter.common.filter;
 
 import com.google.common.net.HttpHeaders;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 
@@ -13,6 +15,10 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import static com.lhf.usercenter.common.contant.UserConstant.USER_LOGIN_STATUS;
+
+@Component
+@Slf4j
 public class MyFilter implements Filter {
 
     @Override
@@ -25,7 +31,6 @@ public class MyFilter implements Filter {
             throws IOException, ServletException {
         HttpServletRequest httpServletRequest = (HttpServletRequest) request;
         HttpServletResponse httpServletResponse = (HttpServletResponse) response;
-
         // 设置跨域相关的响应头
         httpServletResponse.setHeader("Access-Control-Allow-Origin", httpServletRequest.getHeader("origin"));
         httpServletResponse.setHeader("Access-Control-Allow-Credentials", "true");
@@ -38,7 +43,17 @@ public class MyFilter implements Filter {
             httpServletResponse.setStatus(HttpServletResponse.SC_OK);
             return;
         }
-        ((HttpServletResponse) response).setHeader(HttpHeaders.SET_COOKIE,"SameSite=None;Secure");
+        ((HttpServletResponse) response).setHeader(HttpHeaders.SET_COOKIE, "SameSite=None;Secure");
+
+        StringBuffer requestURL = httpServletRequest.getRequestURL();
+        if (!(requestURL.toString().contains("/user/login") ||
+                requestURL.toString().contains("/user/logout") ||
+                requestURL.toString().contains("/user/register")) && httpServletRequest.getSession().getAttribute(USER_LOGIN_STATUS) == null) {
+                log.error("用户未登录或已过期，请重新登录");
+                httpServletResponse.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                return;
+            }
+
         // 将请求继续传递给下一个过滤器或目标资源
         chain.doFilter(request, response);
     }

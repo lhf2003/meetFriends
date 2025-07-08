@@ -1,12 +1,20 @@
 package com.lhf.usercenter.webSocket;
 
+import cn.hutool.http.HttpRequest;
+import cn.hutool.http.HttpResponse;
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONArray;
+import com.alibaba.fastjson2.JSONObject;
 import com.google.gson.Gson;
+import com.lhf.usercenter.common.ErrorCode;
+import com.lhf.usercenter.common.exception.BusinessException;
 import com.lhf.usercenter.config.GetHttpSessionConfig;
-import com.lhf.usercenter.contant.UserConstant;
+import com.lhf.usercenter.common.contant.UserConstant;
 import com.lhf.usercenter.model.domain.User;
 import com.lhf.usercenter.service.ChatMessagesService;
 import com.lhf.usercenter.service.impl.ChatMessagesServiceImpl;
 import com.lhf.usercenter.webSocket.pojo.ResultMessage;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -19,15 +27,20 @@ import javax.websocket.server.ServerEndpoint;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static com.lhf.usercenter.common.contant.UserConstant.CHAT_WITH_AI;
+
 @ServerEndpoint(value = "/chat", configurator = GetHttpSessionConfig.class)
 @Component
+@Slf4j
 public class ChatEndpoint {
 
     private static final Map<Long, Session> onlineUsers = new ConcurrentHashMap<>();
 
+    // 存储当前聊天的用户组，用于标识已读消息
     private static final List<Map<Long, Long>> chatIds = new ArrayList<>();
 
-    public static HashSet<String> chatUserKeys = new HashSet<>();
+    // 存储消息缓存key
+    public static Set<String> chatUserKeys = new HashSet<>();
 
     private HttpSession httpSession;
 
@@ -114,6 +127,24 @@ public class ChatEndpoint {
             // 从在线用户列表中获取接收者的 WebSocket 会话
             Session session1 = onlineUsers.get(receiverId);
             Session session2 = onlineUsers.get(senderId);
+            // 添加大模型处理逻辑
+            if (receiverId == 0L) { // 判断是否是发给AI助手
+                // 存储用户信息
+                redisTemplate.opsForList().rightPush(key, msg);
+                // 维护一个用户和AI的会话列表，用于连续对话
+                Object object = redisTemplate.opsForValue().get(CHAT_WITH_AI + senderId);
+                JSONArray jsonArray = object == null ? new JSONArray() : JSON.parseArray((String) object);
+                JSONObject userMessage = new JSONObject();
+                userMessage.put("role", "user");
+                userMessage.put("content", msg.getMessage());
+                jsonArray.add(userMessage);
+                String userMsgString = jsonArray.toJSONString();
+//                log.info("用户提问："+userMsgString);
+                redisTemplate.opsForValue().set(CHAT_WITH_AI + senderId, userMsgString);
+                // 调用AI接口
+                handleAIMessage(senderId);
+                return;
+            }
             boolean flag = true;
             // 对方用户也在线
             if (session1 != null && session2 != null) {
@@ -127,11 +158,77 @@ public class ChatEndpoint {
                 msg.setReadStatus(0); // 连接中对话的消息为未读
             }
             // 将消息存入 Redis 缓存
-            RedisTemplate redisTemplate = getRedisTemplate();
             redisTemplate.opsForList().rightPush(key, msg);
 
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    // AI消息处理方法
+    private void handleAIMessage(Long senderId) {
+        new Thread(() -> { // 使用新线程避免阻塞WebSocket
+            try {
+                // 调用DeepSeek接口
+                JSONObject aiResponse = callDeepSeekAPI(senderId);
+
+                // 构造AI回复消息
+                ResultMessage aiMsg = new ResultMessage();
+                aiMsg.setSenderId(0L); // AI用户ID
+                aiMsg.setReceiverId(senderId);
+                aiMsg.setMessage(aiResponse.getString("content"));
+                aiMsg.setTimestamp(new Date());
+                aiMsg.setReadStatus(1);
+
+                // 发送给前端
+                Session userSession = onlineUsers.get(senderId);
+                if (userSession != null && userSession.isOpen()) {
+                    userSession.getBasicRemote().sendText(new Gson().toJson(aiMsg));
+                }
+
+                // 存储消息
+                String key = "chat_messages:senderId:0:receiverId:" + senderId;
+                redisTemplate.opsForList().rightPush(key, aiMsg);
+
+                // 维护一个用户和AI的会话列表，用于连续对话
+                JSONArray chatHistory = JSON.parseArray((String) redisTemplate.opsForValue().get(CHAT_WITH_AI + senderId));
+                if (chatHistory != null) {
+                    chatHistory.add(aiResponse);
+                } else {
+                    log.error("chatHistory为空");
+                }
+                String aiMsgString = chatHistory.toJSONString();
+//                log.info("AI回答："+aiMsgString);
+                redisTemplate.opsForValue().set(CHAT_WITH_AI + senderId, aiMsgString);
+
+            } catch (Exception e) {
+                log.error("AI处理失败：", e);
+            }
+        }).start();
+    }
+
+    private JSONObject callDeepSeekAPI(Long senderId) {
+        JSONArray messages = JSON.parseArray((String) redisTemplate.opsForValue().get(CHAT_WITH_AI + senderId));
+        JSONObject requestBody = new JSONObject();
+        requestBody.put("model", "deepseek-ai/DeepSeek-V3");
+        requestBody.put("messages", messages);
+//        log.info("发起提问：" + requestBody.toJSONString());
+
+        HttpRequest request = HttpRequest.post("https://api.siliconflow.cn/v1/chat/completions")
+                .header("Authorization", "Bearer sk-iizujlskzfuirjzyxwtoaeenisgnvbtmagdjeaimqmhwfjrr")
+                .header("Content-Type", "application/json")
+                .body(requestBody.toJSONString());
+
+        try (HttpResponse response = request.execute()) {
+            // 解析响应体.获取回复内容
+            String body = response.body();
+            JSONObject responseBody = JSON.parseObject(body);
+            JSONArray respMessage = (JSONArray) responseBody.get("choices");
+            JSONObject object = (JSONObject) respMessage.get(0);
+            return (JSONObject) object.get("message");
+        } catch (Exception e) {
+            log.error("请求错误：{}", e.getMessage());
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "调用AI模型接口失败");
         }
     }
 

@@ -1,6 +1,6 @@
 package com.lhf.usercenter.config;
 
-import com.lhf.usercenter.filter.MyFilter;
+import com.lhf.usercenter.common.filter.MyFilter;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

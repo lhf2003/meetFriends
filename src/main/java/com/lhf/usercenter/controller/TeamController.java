@@ -1,12 +1,10 @@
 package com.lhf.usercenter.controller;
 
-import cn.hutool.core.bean.BeanUtil;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.lhf.usercenter.common.BaseResponse;
 import com.lhf.usercenter.common.ErrorCode;
 import com.lhf.usercenter.common.utils.ResultUtil;
-import com.lhf.usercenter.exception.BusinessException;
+import com.lhf.usercenter.common.exception.BusinessException;
 import com.lhf.usercenter.model.TeamQuery;
 import com.lhf.usercenter.model.domain.Team;
 import com.lhf.usercenter.model.domain.User;
@@ -19,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 import java.util.List;
 
 @RestController
@@ -66,6 +65,10 @@ public class TeamController {
     public BaseResponse<List<TeamUserVO>> getTeamList(TeamQuery teamQuery, HttpServletRequest request) {
         if (teamQuery == null) {
             throw new BusinessException(ErrorCode.PARAM_ERROR);
+        }
+        HttpSession session = request.getSession();
+        if (session == null) {
+            throw new BusinessException(ErrorCode.PARAM_ERROR, "session不存在");
         }
 //        boolean admin = teamService.isAdmin(request);
         // 1、查询队伍列表

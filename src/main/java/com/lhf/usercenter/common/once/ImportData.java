@@ -1,4 +1,4 @@
-package com.lhf.usercenter.once;
+package com.lhf.usercenter.common.once;
 
 /**
  * 向数据库导入大量假数据

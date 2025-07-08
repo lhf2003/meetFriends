@@ -1,7 +1,7 @@
 package com.lhf.usercenter.common.utils;
 
 import cn.hutool.core.date.LocalDateTimeUtil;
-import com.lhf.usercenter.contant.UserConstant;
+import com.lhf.usercenter.common.contant.UserConstant;
 
 import javax.mail.*;
 import javax.mail.internet.InternetAddress;

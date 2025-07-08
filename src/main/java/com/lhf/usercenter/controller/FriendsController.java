@@ -3,7 +3,7 @@ package com.lhf.usercenter.controller;
 import com.lhf.usercenter.common.BaseResponse;
 import com.lhf.usercenter.common.ErrorCode;
 import com.lhf.usercenter.common.utils.ResultUtil;
-import com.lhf.usercenter.exception.BusinessException;
+import com.lhf.usercenter.common.exception.BusinessException;
 import com.lhf.usercenter.model.domain.User;
 import com.lhf.usercenter.model.vo.FriendVO;
 import com.lhf.usercenter.service.RelationshipService;

@@ -1,5 +1,6 @@
 package com.lhf.usercenter.common;
 
+import com.lhf.usercenter.common.contant.CommonConstant;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -15,5 +16,14 @@ public class PageRequest implements Serializable {
      * 页面大小
      */
     protected int pageSize;
+    /**
+     * 排序字段
+     */
+    private String sortField;
+
+    /**
+     * 排序顺序（默认升序）
+     */
+    private String sortOrder = CommonConstant.SORT_ORDER_ASC;
 
 }

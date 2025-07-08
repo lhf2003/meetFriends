@@ -5,7 +5,7 @@ import com.lhf.usercenter.common.ErrorCode;
 import com.lhf.usercenter.common.utils.ObsUtil;
 import com.lhf.usercenter.common.utils.ResultUtil;
 import com.lhf.usercenter.config.ObsConfig;
-import com.lhf.usercenter.exception.BusinessException;
+import com.lhf.usercenter.common.exception.BusinessException;
 import com.lhf.usercenter.model.domain.User;
 import com.lhf.usercenter.service.UserService;
 import com.obs.services.model.PutObjectResult;
@@ -17,9 +17,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import java.util.concurrent.TimeUnit;
-
-import static com.lhf.usercenter.contant.UserConstant.USER_LOGIN_STATUS;
+import static com.lhf.usercenter.common.contant.UserConstant.USER_LOGIN_STATUS;
 
 @RestController
 @RequestMapping("/obs")
@@ -37,15 +35,15 @@ public class ObsController {
      * 文件上传
      *
      * @param uploadFile         上传的文件
-     * @param httpServletRequest 请求
+     * @param request 请求
      * @return 文件路径
      */
     @PostMapping("/upload/avatar")
-    public BaseResponse<String> fileUpload(@RequestPart("uploadFile") MultipartFile uploadFile, HttpServletRequest httpServletRequest) {
-        if (httpServletRequest == null || uploadFile.isEmpty()) {
+    public BaseResponse<String> fileUpload(@RequestPart("uploadFile") MultipartFile uploadFile, HttpServletRequest request) {
+        if (request == null || uploadFile.isEmpty()) {
             throw new BusinessException(ErrorCode.PARAM_ERROR);
         }
-        Object attribute = httpServletRequest.getSession().getAttribute(USER_LOGIN_STATUS);
+        Object attribute = request.getSession().getAttribute(USER_LOGIN_STATUS);
         User user = (User) attribute;
         Long userId = user.getId();
         //将文件转换为md5,实现唯一性
@@ -60,8 +58,8 @@ public class ObsController {
             user.setUserAvatar(url);
             // 更新数据库
             userService.updateById(user);
-            // 更新缓存
-            redisTemplate.opsForValue().set(USER_LOGIN_STATUS + userId, user, 24, TimeUnit.HOURS);
+            // 更新session缓存
+            request.getSession().setAttribute(USER_LOGIN_STATUS, user);
             // 响应数据
             return ResultUtil.success(url);
         }

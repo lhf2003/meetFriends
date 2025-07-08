@@ -35,7 +35,7 @@ public class MessageCacheEndurance {
     @Transactional
     public void doMessageCacheEndurance() {
         log.info("开始持久化用户消息");
-        HashSet<String> chatUserKeys = ChatEndpoint.chatUserKeys;
+        Set<String> chatUserKeys = ChatEndpoint.chatUserKeys;
         for (String chatUserKey : chatUserKeys) {
             List<ChatMessages> chatMessagesList = new ArrayList<>();
             Set<String> messageKeys = redisTemplate.opsForList().getOperations().keys(chatUserKey);

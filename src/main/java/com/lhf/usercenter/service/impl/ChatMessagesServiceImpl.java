@@ -3,7 +3,7 @@ package com.lhf.usercenter.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.lhf.usercenter.common.ErrorCode;
-import com.lhf.usercenter.exception.BusinessException;
+import com.lhf.usercenter.common.exception.BusinessException;
 import com.lhf.usercenter.mapper.ChatMessagesMapper;
 import com.lhf.usercenter.model.domain.ChatMessages;
 import com.lhf.usercenter.model.domain.User;
@@ -99,7 +99,7 @@ public class ChatMessagesServiceImpl extends ServiceImpl<ChatMessagesMapper, Cha
     @Override
     @Transactional
     public List<ChatMessagesVO> getHistoryMessages(long senderId, long receiverId) {
-        if (senderId <= 0 || receiverId <= 0) {
+        if (senderId < 0 || receiverId < 0) {
             throw new BusinessException(ErrorCode.PARAM_ERROR);
         }
 

@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.lhf.usercenter.model.domain.User;
 import com.lhf.usercenter.model.request.UserRegisterRequest;
+import com.lhf.usercenter.model.vo.UserVO;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
@@ -95,7 +96,7 @@ public interface UserService extends IService<User> {
      * @param request 请求
      * @return 当前用户信息
      */
-    User getCurrentUser(HttpServletRequest request);
+    User getPageNumUser(HttpServletRequest request);
 
     /**
      * 获取当前登录用户
@@ -105,10 +106,19 @@ public interface UserService extends IService<User> {
      */
     User getLoginUser(HttpServletRequest request);
 
-    boolean updateUser(User user, User loginUser);
+    /**
+     * 更新用户信息
+     *
+     * @param user    新的用户信息
+     * @param request 当前用户请求
+     * @return
+     */
+    boolean updateUser(User user, HttpServletRequest request);
 
     Page<User> recommendUsers(long pageNum, long pageSize, HttpServletRequest request);
 
+    UserVO getUserVO(User user);
+    User getLoginUserPermitNull(HttpServletRequest request);
     /**
      * 匹配用户
      *

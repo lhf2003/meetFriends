@@ -6,7 +6,7 @@ import com.lhf.usercenter.common.ErrorCode;
 import com.lhf.usercenter.common.utils.MailUtils;
 import com.lhf.usercenter.common.utils.ResultUtil;
 import com.lhf.usercenter.common.utils.VerificationCodeUtil;
-import com.lhf.usercenter.exception.BusinessException;
+import com.lhf.usercenter.common.exception.BusinessException;
 import com.lhf.usercenter.model.domain.User;
 import com.lhf.usercenter.model.request.UserLoginRequest;
 import com.lhf.usercenter.model.request.UserModifyPasswordRequest;
@@ -15,16 +15,19 @@ import com.lhf.usercenter.service.RelationshipService;
 import com.lhf.usercenter.service.UserService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
-import static com.lhf.usercenter.contant.UserConstant.*;
+import static com.lhf.usercenter.common.contant.UserConstant.*;
 
 @Api("用户模块")
+@Slf4j
 @RestController
 @RequestMapping("/user")
 public class UserController {
@@ -36,6 +39,7 @@ public class UserController {
     @ApiOperation("用户注册")
     @PostMapping("/register")
     public BaseResponse<Boolean> userRegister(@RequestBody UserRegisterRequest userRegisterRequest) {
+        log.info("user register request : {}", userRegisterRequest);
         if (userRegisterRequest == null) {
             throw new BusinessException(ErrorCode.PARAM_ERROR);
         }
@@ -52,6 +56,7 @@ public class UserController {
     @ApiOperation("用户登录")
     @PostMapping("/login")
     public BaseResponse<User> userLogin(@RequestBody UserLoginRequest userLoginRequest, HttpServletRequest request) {
+        log.info("user login request: {}", userLoginRequest);
         if (userLoginRequest == null) {
             throw new BusinessException(ErrorCode.PARAM_ERROR, "请求参数为空");
         }
@@ -96,14 +101,14 @@ public class UserController {
 
     @ApiOperation("获取当前用户信息")
     @GetMapping("/current")
-    public BaseResponse<User> getCurrentUser(HttpServletRequest request) {
+    public BaseResponse<User> getPageNumUser(HttpServletRequest request) {
         Object userObj = request.getSession().getAttribute(USER_LOGIN_STATUS);
         User user = (User) userObj;
         if (user == null) {
             throw new BusinessException(ErrorCode.USER_NOT_LOGIN);
         }
         // 校验
-        User currentUser = userService.getCurrentUser(request);
+        User currentUser = userService.getPageNumUser(request);
         // 脱敏
         User safetyUser = userService.getSafetyUser(currentUser);
         return ResultUtil.success(safetyUser);
@@ -115,10 +120,8 @@ public class UserController {
         if (user == null || request == null) {
             throw new BusinessException(ErrorCode.PARAM_ERROR);
         }
-        // 校验
-        User loginUser = userService.getLoginUser(request);
         // 更新
-        boolean result = userService.updateUser(user, loginUser);
+        boolean result = userService.updateUser(user, request);
         return ResultUtil.success(result);
     }
 
@@ -163,7 +166,9 @@ public class UserController {
         if (user == null) {
             throw new BusinessException(ErrorCode.USER_NOT_FOUND);
         }
-        return ResultUtil.success(user);
+        // 脱敏
+        User safetyUser = userService.getSafetyUser(user);
+        return ResultUtil.success(safetyUser);
     }
 
     @ApiOperation("生成注册验证码")
@@ -172,19 +177,21 @@ public class UserController {
         if (StringUtils.isBlank(registerMethod)) {
             throw new BusinessException(ErrorCode.PARAM_ERROR, "无效的验证方式");
         }
-        // 生成验证码
-        String code = VerificationCodeUtil.generateCode();
-        if (StringUtils.isBlank(code)) {
-            throw new BusinessException(ErrorCode.ERROR, "验证码生成失败");
-        }
-        // 存储验证码，method是用户选择的验证方式（邮箱/手机号）
-        VerificationCodeUtil.storeCode(registerMethod, code);
-        // 判断验证方式，如果是邮箱则发送邮件，如果是手机号则发送短信
-        if (StringUtils.contains(registerMethod, "@")) {
-            MailUtils.sendMail(registerMethod, code, USER_REGISTER);
-        }
+        CompletableFuture.runAsync(() -> {
+            // 生成验证码
+            String code = VerificationCodeUtil.generateCode();
+            if (StringUtils.isBlank(code)) {
+                throw new BusinessException(ErrorCode.ERROR, "验证码生成失败");
+            }
+            // 存储验证码，method是用户选择的验证方式（邮箱/手机号）
+            VerificationCodeUtil.storeCode(registerMethod, code);
+            // 判断验证方式，如果是邮箱则发送邮件，如果是手机号则发送短信
+            if (StringUtils.contains(registerMethod, "@")) {
+                MailUtils.sendMail(registerMethod, code, USER_REGISTER);
+            }
+        });
         // TODO 发送手机验证码
-        return ResultUtil.success(code);
+        return ResultUtil.success("已发送验证码");
     }
 
     @ApiOperation("修改密码")
@@ -258,7 +265,7 @@ public class UserController {
 
     @ApiOperation("获取当前私聊用户对象")
     @GetMapping("/get/{id}")
-    public BaseResponse<User> getCurrentChatUser(@PathVariable Long id) {
+    public BaseResponse<User> getPageNumChatUser(@PathVariable Long id) {
         if (id == null) {
             throw new BusinessException(ErrorCode.PARAM_ERROR);
         }
